@@ -1,7 +1,10 @@
 package models
 
 type User struct {
-	Username     string
-	Password     string
+	Username string
+}
+
+type UserCredentials struct {
+	AccessToken  string
 	RefreshToken string
 }
