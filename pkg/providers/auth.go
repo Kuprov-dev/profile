@@ -10,6 +10,8 @@ import (
 	"profile_service/pkg/models"
 )
 
+// Интерфейс для реализации паттерна Provider
+// Инкапсулирует обращения к сервису auth
 type AuthServiceProvider interface {
 	GetUserData(creds *models.UserCredentials) (models.User, error)
 }

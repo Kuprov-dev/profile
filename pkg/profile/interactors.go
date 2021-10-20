@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// Интерактор, который инкапсулирует обращения к сервису auth
+// Интерактор, который инкапсулирует логику работы с AuthServiceProvider
 func getUserDataFromAuthService(ctx context.Context, creds *models.UserCredentials, authService providers.AuthServiceProvider, config conf.Config) (*models.User, error) {
 	var user models.User
 	var err error
