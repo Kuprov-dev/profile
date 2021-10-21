@@ -69,3 +69,10 @@ func ProfileDetailsHandler(config *conf.Config) http.HandlerFunc {
 		}
 	}
 }
+
+// Базовая ручка, чтобы ходить на auth_service/me
+func ReceiversList(config *conf.Config) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("hello"))
+	}
+}

@@ -10,8 +10,8 @@ import (
 )
 
 // Интерактор, который инкапсулирует логику работы с AuthServiceProvider
-func getUserDataFromAuthService(ctx context.Context, creds *models.UserCredentials, authService providers.AuthServiceProvider, config conf.Config) (*models.User, error) {
-	var user models.User
+func getUserDataFromAuthService(ctx context.Context, creds *models.UserCredentials, authService providers.AuthServiceProvider, config conf.Config) (*models.UserDetails, error) {
+	var user models.UserDetails
 	var err error
 
 	effector := func(ctx context.Context) error {

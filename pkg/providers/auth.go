@@ -15,7 +15,7 @@ import (
 // Интерфейс для реализации паттерна Provider
 // Инкапсулирует обращения к сервису auth
 type AuthServiceProvider interface {
-	GetUserData(creds *models.UserCredentials) (models.User, error)
+	GetUserData(creds *models.UserCredentials) (models.UserDetails, error)
 }
 
 type HttpAuthServiceProvider struct {
@@ -26,10 +26,10 @@ func NewHttpAuthServiceProvider(config *conf.Config) *HttpAuthServiceProvider {
 	return &HttpAuthServiceProvider{config: config}
 }
 
-func (service *HttpAuthServiceProvider) GetUserData(creds *models.UserCredentials) (models.User, error) {
+func (service *HttpAuthServiceProvider) GetUserData(creds *models.UserCredentials) (models.UserDetails, error) {
 	credsJSON, err := json.Marshal(creds)
 
-	var user models.User
+	var user models.UserDetails
 
 	if err != nil {
 		log.Println("Credentials marshaling error")
