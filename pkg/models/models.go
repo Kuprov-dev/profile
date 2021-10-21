@@ -1,10 +1,10 @@
 package models
 
 type User struct {
-	Username string
+	Username string `json:"username"`
 }
 
 type UserCredentials struct {
-	AccessToken  string
-	RefreshToken string
+	AccessToken  string `json:"access"`
+	RefreshToken string `json:"refresh"`
 }

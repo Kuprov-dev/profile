@@ -20,10 +20,10 @@ type Config struct {
 func New() *Config {
 	return &Config{
 		Port:                  env.GetEnv("PORT", "8000"),
-		AuthServiceHost:       env.GetEnv("AUTH_SERVICE_HOST", "auth_service"),
-		AuthServicePort:       env.GetEnv("AUTH_SERVICE_PORT", "8000"),
+		AuthServiceHost:       env.GetEnv("AUTH_SERVICE_HOST", "http://localhost"),
+		AuthServicePort:       env.GetEnv("AUTH_SERVICE_PORT", "8080"),
 		AuthServiceRetries:    getenvInt(env.GetEnv("AUTH_SERVICE_RETRIES", "3")),
-		AuthServiceRetryDelay: getenvInt(env.GetEnv("AUTH_SERVICE_RETRY_DELAY", "200")),
+		AuthServiceRetryDelay: getenvInt(env.GetEnv("AUTH_SERVICE_RETRY_DELAY", "500")),
 		SecretKeyAccess:       env.GetEnv("ACCESS_SECRET", "secretsecret"),
 		SecretKeyRefresh:      env.GetEnv("REFRESH_SECRET", "epstein didn't kill himself"),
 	}

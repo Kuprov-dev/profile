@@ -2,6 +2,7 @@ package profile
 
 import (
 	"context"
+	"log"
 	"profile_service/pkg/conf"
 	"profile_service/pkg/models"
 	"profile_service/pkg/providers"
@@ -15,6 +16,7 @@ func getUserDataFromAuthService(ctx context.Context, creds *models.UserCredentia
 
 	effector := func(ctx context.Context) error {
 		user, err = authService.GetUserData(creds)
+		log.Println("Effector ", user, err)
 		if err != nil {
 			return err
 		}
@@ -24,9 +26,5 @@ func getUserDataFromAuthService(ctx context.Context, creds *models.UserCredentia
 	effectorWithRetry := Retry(effector, config.AuthServiceRetries, time.Duration(config.AuthServiceRetryDelay)*time.Millisecond)
 	err = effectorWithRetry(ctx)
 
-	if err != nil {
-		return &models.User{}, err
-	}
-
-	return &user, nil
+	return &user, err
 }

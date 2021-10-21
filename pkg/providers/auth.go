@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"profile_service/pkg/conf"
+	"profile_service/pkg/errors"
 	"profile_service/pkg/models"
 )
 
@@ -27,9 +29,11 @@ func NewHttpAuthServiceProvider(config *conf.Config) *HttpAuthServiceProvider {
 func (service *HttpAuthServiceProvider) GetUserData(creds *models.UserCredentials) (models.User, error) {
 	credsJSON, err := json.Marshal(creds)
 
+	var user models.User
+
 	if err != nil {
 		log.Println("Credentials marshaling error")
-		return models.User{}, err
+		return user, errors.NewRequestError(400, errors.CredsMarshalingError, err)
 	}
 
 	addr := service.config.GetAuthServiceAddr() + "/me"
@@ -38,11 +42,36 @@ func (service *HttpAuthServiceProvider) GetUserData(creds *models.UserCredential
 		bytes.NewBuffer(credsJSON))
 
 	if err != nil {
-		log.Println("Get response from auth service error")
-		return models.User{}, err
+		log.Println("Auth service is unavailable")
+		return user, errors.NewRequestError(503, errors.AuthServiceUnavailableError, err)
 	}
 
-	fmt.Println(resp)
+	defer resp.Body.Close()
 
-	return models.User{}, nil
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("Read response body error")
+		return user, errors.NewRequestError(500, errors.ClientRequestError, err)
+	}
+
+	fmt.Println("BODY", string(body), resp.StatusCode)
+
+	switch resp.StatusCode {
+	case 400:
+		return user, errors.NewRequestError(400, errors.BadRequestError, err)
+	case 401:
+		return user, errors.NewRequestError(401, errors.UnauthorisedError, err)
+	case 403:
+		return user, errors.NewRequestError(403, errors.ForbiddenError, err)
+	case 200:
+		err = json.Unmarshal(body, &user)
+		if err != nil {
+			log.Println("Unmarshal auth response error")
+			return user, errors.NewRequestError(500, errors.ClientRequestError, err)
+		}
+		return user, nil
+	default:
+		return user, errors.NewRequestError(502, errors.AuthServiceBadGatewayError, err)
+	}
+
 }
