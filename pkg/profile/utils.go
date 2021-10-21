@@ -16,7 +16,7 @@ func Retry(effoctor Effoctor, retries int, delay time.Duration) Effoctor {
 		for r := 0; ; r++ {
 			log.Println("...Attempt ", r)
 			err := effoctor(ctx)
-			if err == nil || r >= retries {
+			if err == nil || r > retries {
 				return err
 			}
 
