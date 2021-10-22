@@ -17,8 +17,9 @@ var Users map[int]models.User
 func init() {
 	Users = map[int]models.User{
 		1: {
-			ID:       1,
-			Username: "user1",
+			ID:        1,
+			Username:  "user1",
+			Receivers: []int{1, 2, 3},
 		},
 		2: {
 			ID:       2,

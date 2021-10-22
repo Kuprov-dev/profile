@@ -28,4 +28,5 @@ const (
 	ForbiddenError
 	AuthServiceBadGatewayError
 	AuthServiceUnavailableError
+	UserNotFound
 )

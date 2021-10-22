@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"profile_service/pkg/conf"
+	"profile_service/pkg/db"
 	"profile_service/pkg/errors"
 	"profile_service/pkg/models"
 	"profile_service/pkg/providers"
@@ -72,14 +73,51 @@ func ProfileDetailsHandler(config *conf.Config) http.HandlerFunc {
 }
 
 // Базовая ручка, чтобы ходить на auth_service/me
-func ReceiversList(config *conf.Config, authService providers.AuthServiceProvider) http.HandlerFunc {
+func ReceiversList(config *conf.Config, userDAO db.UserDAO, authService providers.AuthServiceProvider) http.HandlerFunc {
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		user := r.Context().Value(ContextUserKey)
-		body, _ := json.Marshal(user)
+		userValue := r.Context().Value(ContextUserKey)
+		// var user interface{}
+		// user = models.User{ID: 100, Username: "hello"}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(body))
+		user, ok := userValue.(*models.UserDetails)
+
+		if !ok {
+			makeInternalServerErrorResponse(&w)
+			return
+		}
+
+		var err error
+		var receivers *models.UserRecievers
+
+		receivers, err = getUserReceivers(user.Username, userDAO)
+
+		if err != nil {
+			ve, ok := err.(*errors.RequestError)
+
+			if !ok {
+				makeInternalServerErrorResponse(&w)
+				return
+			}
+
+			switch {
+			case ve.Errors&errors.UserNotFound != 0:
+				makeNotFoundErrorResponse(&w)
+				return
+			default:
+				makeBadRequestErrorResponse(&w, "bruuuh.")
+				return
+			}
+
+		}
+
+		if resp, err := json.Marshal(receivers); err != nil {
+			makeInternalServerErrorResponse(&w)
+		} else {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(resp))
+		}
+
 	}
 	return IsAuthenticated(handler, config, authService)
 }

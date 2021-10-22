@@ -14,3 +14,7 @@ type UserCredentials struct {
 	AccessToken  string `json:"access"`
 	RefreshToken string `json:"refresh"`
 }
+
+type UserRecievers struct {
+	Receivers []int `json:"receivers"`
+}

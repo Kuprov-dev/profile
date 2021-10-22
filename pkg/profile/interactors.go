@@ -2,8 +2,11 @@ package profile
 
 import (
 	"context"
+	"errors"
 	"log"
 	"profile_service/pkg/conf"
+	"profile_service/pkg/db"
+	requestErrors "profile_service/pkg/errors"
 	"profile_service/pkg/models"
 	"profile_service/pkg/providers"
 	"time"
@@ -49,4 +52,17 @@ func checkUserIsAuthenticated(ctx context.Context, creds *models.UserCredentials
 	err = effectorWithRetry(ctx)
 
 	return user, err
+}
+
+// Интерактор, который получает список рассылки юзера из UserDAO
+func getUserReceivers(username string, userDAO db.UserDAO) (*models.UserRecievers, error) {
+	userFromDB := userDAO.GetByUsername(username)
+
+	if userFromDB == nil {
+		return nil, requestErrors.NewRequestError(404, requestErrors.UserNotFound, errors.New("USER NOT FOUND BRUH"))
+	}
+
+	var receivers models.UserRecievers = models.UserRecievers{Receivers: userFromDB.Receivers}
+
+	return &receivers, nil
 }
