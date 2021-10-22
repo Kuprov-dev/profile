@@ -16,13 +16,12 @@ type ResponseBody struct {
 }
 
 // Базовая ручка, чтобы ходить на auth_service/me
-func ProfileDetailsHandler(config *conf.Config) http.HandlerFunc {
+func ProfileDetailsHandler(config *conf.Config, authService providers.AuthServiceProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		creds := &models.UserCredentials{}
 		creds.AccessToken = r.Header.Get("Access")
 		creds.RefreshToken = r.Header.Get("Refresh")
 
-		authService := providers.NewHttpAuthServiceProvider(config)
 		userData, err := getUserDataFromAuthService(r.Context(), creds, authService, *config)
 
 		if err != nil {
@@ -76,8 +75,6 @@ func ProfileDetailsHandler(config *conf.Config) http.HandlerFunc {
 func ReceiversList(config *conf.Config, userDAO db.UserDAO, authService providers.AuthServiceProvider) http.HandlerFunc {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		userValue := r.Context().Value(ContextUserKey)
-		// var user interface{}
-		// user = models.User{ID: 100, Username: "hello"}
 
 		user, ok := userValue.(*models.UserDetails)
 
@@ -107,7 +104,6 @@ func ReceiversList(config *conf.Config, userDAO db.UserDAO, authService provider
 				makeBadRequestErrorResponse(&w, "bruuuh.")
 				return
 			}
-
 		}
 
 		if resp, err := json.Marshal(receivers); err != nil {
@@ -117,7 +113,6 @@ func ReceiversList(config *conf.Config, userDAO db.UserDAO, authService provider
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(resp))
 		}
-
 	}
 	return IsAuthenticated(handler, config, authService)
 }

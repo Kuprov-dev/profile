@@ -21,7 +21,7 @@ func main() {
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/i", profile.ProfileDetailsHandler(config))
+	r.HandleFunc("/i", profile.ProfileDetailsHandler(config, &authService))
 	r.HandleFunc("/receivers/{id:[0-9]+}", profile.ReceiversList(config, &userDAO, &authService)).Methods("GET")
 
 	fmt.Println("Starting server")
