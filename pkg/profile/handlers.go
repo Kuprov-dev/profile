@@ -32,6 +32,7 @@ func ProfileDetailsHandler(config *conf.Config) http.HandlerFunc {
 				return
 			}
 
+			// TODO refactor for DRY
 			switch {
 			case ve.Errors&errors.CredsMarshalingError != 0:
 				makeInternalServerErrorResponse(&w)
@@ -71,8 +72,14 @@ func ProfileDetailsHandler(config *conf.Config) http.HandlerFunc {
 }
 
 // Базовая ручка, чтобы ходить на auth_service/me
-func ReceiversList(config *conf.Config) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("hello"))
+func ReceiversList(config *conf.Config, authService providers.AuthServiceProvider) http.HandlerFunc {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		user := r.Context().Value(ContextUserKey)
+		body, _ := json.Marshal(user)
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(body))
 	}
+	return IsAuthenticated(handler, config, authService)
 }

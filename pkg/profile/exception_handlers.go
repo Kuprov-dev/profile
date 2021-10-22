@@ -46,3 +46,10 @@ func makeForbiddenErrorResponse(w *http.ResponseWriter) {
 	body, _ := json.Marshal(ResponseBody{Status: 403, Message: "Forbidden error."})
 	(*w).Write(body)
 }
+
+func makeNotFoundErrorResponse(w *http.ResponseWriter) {
+	(*w).Header().Set("Content-Type", "application/json")
+	(*w).WriteHeader(http.StatusUnauthorized)
+	body, _ := json.Marshal(ResponseBody{Status: 404, Message: "Not found error."})
+	(*w).Write(body)
+}
