@@ -22,7 +22,9 @@ func main() {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/i", profile.ProfileDetailsHandler(config, &authService))
-	r.HandleFunc("/receivers/{id:[0-9]+}", profile.ReceiversList(config, &userDAO, &authService)).Methods("GET")
+	r.HandleFunc("/receivers/{id:[0-9]+}/", profile.ReceiversListHandler(config, &userDAO, &authService)).Methods("GET")
+	r.HandleFunc("/receivers/{id:[0-9]+}/", profile.AddRecieverHandler(config, &userDAO, &authService)).Methods("POST")
+	r.HandleFunc("/receivers/{id:[0-9]+}/", profile.RemoveRecieverHandler(config, &userDAO, &authService)).Methods("DELETE")
 
 	fmt.Println("Starting server")
 	log.Fatal(http.ListenAndServe("localhost:8000", r))

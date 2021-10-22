@@ -18,3 +18,11 @@ type UserCredentials struct {
 type UserRecievers struct {
 	Receivers []int `json:"receivers"`
 }
+
+type UserAddReceiver struct {
+	ReceiverUsername string `json:"receiver_username"`
+}
+
+type UserRemoveReciever struct {
+	ReceiverUsername string `json:"receiver_username"`
+}

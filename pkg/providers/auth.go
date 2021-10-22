@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -55,8 +54,6 @@ func (service *HttpAuthServiceProvider) GetUserData(creds *models.UserCredential
 		log.Println("Read response body error")
 		return &user, errors.NewRequestError(500, errors.ClientRequestError, err)
 	}
-
-	fmt.Println("BODY", string(body), resp.StatusCode)
 
 	// TODO refactor for DRY using errors map for example
 	switch resp.StatusCode {

@@ -15,6 +15,7 @@ const (
 	UserNotFoundInDB uint16 = 1 << iota
 	ReceiverNotFoundInDB
 	ReceiverNotInList
+	SameUser
 )
 
 /*-------------------------------------------------------------------*/
@@ -23,6 +24,7 @@ var UserDAOErrorDescriptionMap = map[int]string{
 	int(UserNotFoundInDB):     "User not found.",
 	int(ReceiverNotFoundInDB): "Receiver found.",
 	int(ReceiverNotInList):    "Receiver not in list.",
+	int(SameUser):             "Receiver can not be the same user.",
 }
 
 func (r *UserDAOError) Error() string {

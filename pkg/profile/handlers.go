@@ -2,6 +2,7 @@ package profile
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"profile_service/pkg/conf"
 	"profile_service/pkg/db"
@@ -71,12 +72,12 @@ func ProfileDetailsHandler(config *conf.Config, authService providers.AuthServic
 	}
 }
 
-// Базовая ручка, чтобы ходить на auth_service/me
-func ReceiversList(config *conf.Config, userDAO db.UserDAO, authService providers.AuthServiceProvider) http.HandlerFunc {
+// Ручка списка рассылок для юзера. Возвращает айдишники юзеров
+func ReceiversListHandler(config *conf.Config, userDAO db.UserDAO, authService providers.AuthServiceProvider) http.HandlerFunc {
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		userValue := r.Context().Value(ContextUserKey)
+		userValue := r.Context().Value(ContextUserDetailsKey)
 
-		user, ok := userValue.(*models.UserDetails)
+		userDetails, ok := userValue.(*models.UserDetails)
 
 		if !ok {
 			makeInternalServerErrorResponse(&w)
@@ -86,7 +87,7 @@ func ReceiversList(config *conf.Config, userDAO db.UserDAO, authService provider
 		var err error
 		var receivers *models.UserRecievers
 
-		receivers, err = getUserReceivers(user.Username, userDAO)
+		receivers, err = getUserReceivers(userDetails.Username, userDAO)
 
 		if err != nil {
 			ve, ok := err.(*errors.RequestError)
@@ -114,5 +115,97 @@ func ReceiversList(config *conf.Config, userDAO db.UserDAO, authService provider
 			w.Write([]byte(resp))
 		}
 	}
-	return IsAuthenticated(handler, config, authService)
+
+	// TODO подумать почему приходится инжектить несколько раз и исправить
+	return IsAuthenticated(IsOwner(handler, config, userDAO, authService), config, userDAO, authService)
+}
+
+// Ручка добавления в список рассылки юзера
+func AddRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService providers.AuthServiceProvider) http.HandlerFunc {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		userValue := r.Context().Value(ContextUserIdKey)
+
+		userId, ok := userValue.(int)
+		if !ok {
+			makeBadRequestErrorResponse(&w, "bruh")
+			return
+		}
+
+		if !ok {
+			makeBadRequestErrorResponse(&w, "bruh")
+			return
+		}
+
+		body, err := ioutil.ReadAll(r.Body)
+		defer r.Body.Close()
+
+		if err != nil {
+			makeBadRequestErrorResponse(&w, "bruh")
+		}
+
+		var addReceiverData models.UserAddReceiver
+		err = json.Unmarshal(body, &addReceiverData)
+
+		if err != nil {
+			makeBadRequestErrorResponse(&w, "bruh")
+		}
+
+		err = addReciever(userId, addReceiverData.ReceiverUsername, userDAO)
+
+		if err != nil {
+			makeBadRequestErrorResponse(&w, err.Error())
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+	}
+
+	// TODO подумать почему приходится инжектить несколько раз и исправить
+	return IsAuthenticated(IsOwner(handler, config, userDAO, authService), config, userDAO, authService)
+}
+
+// Ручка удаления из списока рассылки юзера
+func RemoveRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService providers.AuthServiceProvider) http.HandlerFunc {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		userValue := r.Context().Value(ContextUserIdKey)
+
+		userId, ok := userValue.(int)
+		if !ok {
+			makeBadRequestErrorResponse(&w, "bruh")
+			return
+		}
+
+		if !ok {
+			makeBadRequestErrorResponse(&w, "bruh")
+			return
+		}
+
+		body, err := ioutil.ReadAll(r.Body)
+		defer r.Body.Close()
+
+		if err != nil {
+			makeBadRequestErrorResponse(&w, "bruh")
+		}
+
+		var removeReceiverData models.UserRemoveReciever
+		err = json.Unmarshal(body, &removeReceiverData)
+
+		if err != nil {
+			makeBadRequestErrorResponse(&w, "bruh")
+		}
+
+		err = removeReciever(userId, removeReceiverData.ReceiverUsername, userDAO)
+
+		if err != nil {
+			makeBadRequestErrorResponse(&w, err.Error())
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+	}
+
+	// TODO подумать почему приходится инжектить несколько раз и исправить
+	return IsAuthenticated(IsOwner(handler, config, userDAO, authService), config, userDAO, authService)
 }

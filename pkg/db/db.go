@@ -1,7 +1,7 @@
 package db
 
 import (
-	"errors"
+	"profile_service/pkg/errors"
 	"profile_service/pkg/models"
 )
 
@@ -12,14 +12,14 @@ type UserDAO interface {
 	RemoveReceiver(userId, receiverId int) error
 }
 
-var Users map[int]models.User
+var Users map[int]*models.User
 
 func init() {
-	Users = map[int]models.User{
+	Users = map[int]*models.User{
 		1: {
 			ID:        1,
 			Username:  "user1",
-			Receivers: []int{1, 2, 3},
+			Receivers: []int{1},
 		},
 		2: {
 			ID:       2,
@@ -40,7 +40,7 @@ func (*InMemroyUserDAO) GetByUsername(username string) *models.User {
 
 	for _, u := range Users {
 		if u.Username == username {
-			user = &u
+			user = u
 			break
 		}
 	}
@@ -54,30 +54,31 @@ func (*InMemroyUserDAO) GetById(id int) *models.User {
 		return nil
 	}
 
-	return &user
+	return user
 }
 
 func (*InMemroyUserDAO) AddReceiver(userId, receiverId int) error {
 	user, ok := Users[userId]
 	if !ok {
-		return errors.New("USER NOT FOUND")
+		return errors.NewUserDAOError(errors.UserNotFoundInDB, nil)
 	}
 	_, ok = Users[receiverId]
 	if !ok {
-		return errors.New("RECEVIER NOT FOUND")
+		return errors.NewUserDAOError(errors.ReceiverNotFoundInDB, nil)
 	}
 	user.Receivers = append(user.Receivers, receiverId)
+
 	return nil
 }
 
 func (*InMemroyUserDAO) RemoveReceiver(userId, receiverId int) error {
 	user, ok := Users[userId]
 	if !ok {
-		return errors.New("USER NOT FOUND")
+		return errors.NewUserDAOError(errors.UserNotFoundInDB, nil)
 	}
 	_, ok = Users[receiverId]
 	if !ok {
-		return errors.New("RECEIVER NOT FOUND")
+		return errors.NewUserDAOError(errors.ReceiverNotFoundInDB, nil)
 	}
 
 	for ind, id := range user.Receivers {
@@ -86,5 +87,5 @@ func (*InMemroyUserDAO) RemoveReceiver(userId, receiverId int) error {
 			return nil
 		}
 	}
-	return errors.New("RECEIVER IS NOT IN RECEIVERS LIST")
+	return errors.NewUserDAOError(errors.ReceiverNotInList, nil)
 }

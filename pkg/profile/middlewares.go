@@ -2,30 +2,30 @@ package profile
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"profile_service/pkg/conf"
+	"profile_service/pkg/db"
 	"profile_service/pkg/errors"
 	"profile_service/pkg/models"
 	"profile_service/pkg/providers"
+	"strconv"
+	"strings"
 )
 
 type ContextKey string
 
-const ContextUserKey ContextKey = "user"
+const ContextUserDetailsKey ContextKey = "userDetails"
+const ContextUserIdKey ContextKey = "userId"
 
 // мидлварь чтобы проверить что юзер это самое
-func IsAuthenticated(next http.HandlerFunc, config *conf.Config, authService providers.AuthServiceProvider) http.HandlerFunc {
+func IsAuthenticated(next http.HandlerFunc, config *conf.Config, userDao db.UserDAO, authService providers.AuthServiceProvider) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Access: ", r.Header.Get("Access"))
-		fmt.Println("Refresh: ", r.Header.Get("Refresh"))
-
 		creds := models.UserCredentials{
 			AccessToken:  r.Header.Get("Access"),
 			RefreshToken: r.Header.Get("Refresh"),
 		}
 
-		user, err := checkUserIsAuthenticated(r.Context(), &creds, config, authService)
+		userDetails, err := checkUserIsAuthenticated(r.Context(), &creds, config, authService)
 
 		if err != nil {
 			ve, ok := err.(*errors.RequestError)
@@ -64,7 +64,32 @@ func IsAuthenticated(next http.HandlerFunc, config *conf.Config, authService pro
 			}
 		}
 
-		ctx := context.WithValue(r.Context(), ContextUserKey, user)
+		ctx := context.WithValue(r.Context(), ContextUserDetailsKey, userDetails)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// мидлварь для разграничения доступа к ресурсу
+func IsOwner(next http.HandlerFunc, config *conf.Config, userDao db.UserDAO, authService providers.AuthServiceProvider) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		userValue := r.Context().Value(ContextUserDetailsKey)
+
+		user, ok := userValue.(*models.UserDetails)
+
+		if !ok {
+			makeInternalServerErrorResponse(&w)
+			return
+		}
+
+		urlPath := strings.Split(r.URL.Path, "/")
+		userId, _ := strconv.Atoi(urlPath[len(urlPath)-2])
+
+		if !checkIsTheSameUser(userId, user.Username, userDao) {
+			makeForbiddenErrorResponse(&w)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), ContextUserIdKey, userId)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
