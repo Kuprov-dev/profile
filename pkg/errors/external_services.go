@@ -10,6 +10,20 @@ type RequestError struct {
 	Err        error
 }
 
+/*-----------------------External calls errors-----------------------*/
+const (
+	CredsMarshalingError uint16 = 1 << iota
+	ClientRequestError
+	BadRequestError
+	UnauthorisedError
+	ForbiddenError
+	AuthServiceBadGatewayError
+	AuthServiceUnavailableError
+	UserNotFound
+)
+
+/*-------------------------------------------------------------------*/
+
 func (r *RequestError) Error() string {
 	return fmt.Sprintf("status %d: err %v", r.StatusCode, r.Err)
 }
@@ -22,17 +36,7 @@ func NewRequestError(statusCode int, errors uint16, err error) *RequestError {
 	}
 }
 
-const (
-	CredsMarshalingError uint16 = 1 << iota
-	ClientRequestError
-	BadRequestError
-	UnauthorisedError
-	ForbiddenError
-	AuthServiceBadGatewayError
-	AuthServiceUnavailableError
-	UserNotFound
-)
-
+// is it worth to use this way?
 func CreateErrorByStatusCode(statusCode int, err error) *RequestError {
 	switch {
 	case statusCode < 400:
