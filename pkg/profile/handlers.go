@@ -7,8 +7,11 @@ import (
 	"profile_service/pkg/conf"
 	"profile_service/pkg/db"
 	"profile_service/pkg/errors"
+	logging "profile_service/pkg/log"
 	"profile_service/pkg/models"
 	"profile_service/pkg/providers"
+
+	"github.com/sirupsen/logrus"
 )
 
 type ResponseBody struct {
@@ -19,6 +22,14 @@ type ResponseBody struct {
 // Базовая ручка, чтобы ходить на auth_service/me
 func ProfileDetailsHandler(config *conf.Config, authService providers.AuthServiceProvider) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		loggerValue := r.Context().Value(logging.LoggerCtxKey)
+
+		logger, ok := loggerValue.(*logrus.Entry)
+
+		if ok {
+			logger.Println("Handle request by ProfileDetailsHandler")
+		}
+
 		creds := &models.UserCredentials{}
 		creds.AccessToken = r.Header.Get("Access")
 		creds.RefreshToken = r.Header.Get("Refresh")
