@@ -17,8 +17,8 @@ type ResponseBody struct {
 }
 
 // Базовая ручка, чтобы ходить на auth_service/me
-func ProfileDetailsHandler(config *conf.Config, authService providers.AuthServiceProvider) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func ProfileDetailsHandler(config *conf.Config, authService providers.AuthServiceProvider) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		creds := &models.UserCredentials{}
 		creds.AccessToken = r.Header.Get("Access")
 		creds.RefreshToken = r.Header.Get("Refresh")
@@ -69,11 +69,11 @@ func ProfileDetailsHandler(config *conf.Config, authService providers.AuthServic
 			w.WriteHeader(http.StatusOK)
 			w.Write(resp)
 		}
-	}
+	})
 }
 
 // Ручка списка рассылок для юзера. Возвращает айдишники юзеров
-func ReceiversListHandler(config *conf.Config, userDAO db.UserDAO, authService providers.AuthServiceProvider) http.HandlerFunc {
+func ReceiversListHandler(config *conf.Config, userDAO db.UserDAO, authService providers.AuthServiceProvider) http.Handler {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		userValue := r.Context().Value(ContextUserDetailsKey)
 
@@ -117,11 +117,14 @@ func ReceiversListHandler(config *conf.Config, userDAO db.UserDAO, authService p
 	}
 
 	// TODO подумать почему приходится инжектить несколько раз и исправить
-	return IsAuthenticated(IsOwner(handler, config, userDAO, authService), config, userDAO, authService)
+	isAuthenticatedMiddleware := IsAuthenticated(config, userDAO, authService)
+	isOwnerMiddleware := IsOwner(config, userDAO, authService)
+
+	return isAuthenticatedMiddleware(isOwnerMiddleware(http.HandlerFunc(handler)))
 }
 
 // Ручка добавления в список рассылки юзера
-func AddRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService providers.AuthServiceProvider) http.HandlerFunc {
+func AddRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService providers.AuthServiceProvider) http.Handler {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		userValue := r.Context().Value(ContextUserIdKey)
 
@@ -162,11 +165,14 @@ func AddRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService pro
 	}
 
 	// TODO подумать почему приходится инжектить несколько раз и исправить
-	return IsAuthenticated(IsOwner(handler, config, userDAO, authService), config, userDAO, authService)
+	isAuthenticatedMiddleware := IsAuthenticated(config, userDAO, authService)
+	isOwnerMiddleware := IsOwner(config, userDAO, authService)
+
+	return isAuthenticatedMiddleware(isOwnerMiddleware(http.HandlerFunc(handler)))
 }
 
 // Ручка удаления из списока рассылки юзера
-func RemoveRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService providers.AuthServiceProvider) http.HandlerFunc {
+func RemoveRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService providers.AuthServiceProvider) http.Handler {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		userValue := r.Context().Value(ContextUserIdKey)
 
@@ -206,6 +212,8 @@ func RemoveRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService 
 		w.WriteHeader(http.StatusOK)
 	}
 
-	// TODO подумать почему приходится инжектить несколько раз и исправить
-	return IsAuthenticated(IsOwner(handler, config, userDAO, authService), config, userDAO, authService)
+	isAuthenticatedMiddleware := IsAuthenticated(config, userDAO, authService)
+	isOwnerMiddleware := IsOwner(config, userDAO, authService)
+
+	return isAuthenticatedMiddleware(isOwnerMiddleware(http.HandlerFunc(handler)))
 }

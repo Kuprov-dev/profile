@@ -98,7 +98,7 @@ func addReciever(userId int, receiverUsername string, userDAO db.UserDAO) error 
 	return err
 }
 
-// Интерактор который добавляет айди юзера в список рассылки
+// Интерактор для удаления юзера из списка рассылки
 func removeReciever(userId int, receiverUsername string, userDAO db.UserDAO) error {
 	user := userDAO.GetById(userId)
 	if user == nil {
