@@ -23,6 +23,8 @@ func LoggingMiddleware(log *logrus.Entry) func(http.Handler) http.Handler {
 
 			newEntry.Info("Start logging")
 
+			newEntry.Println("LOLOLO")
+
 			ctx := context.WithValue(r.Context(), LoggerCtxKey, newEntry)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
