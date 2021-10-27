@@ -2,6 +2,7 @@ package profile
 
 import (
 	"context"
+	"html/template"
 	"log"
 	"profile_service/pkg/conf"
 	"profile_service/pkg/db"
@@ -118,4 +119,14 @@ func removeReciever(userId int, receiverUsername string, userDAO db.UserDAO) err
 	err := userDAO.RemoveReceiver(user.ID, receiver.ID)
 
 	return err
+}
+
+// Интерактор для сохранения шаблона и парсинга вунтренних параметров
+func loadTemplateAndParseParams(ctx context.Context, templateData *models.HTMLTeplateCreateSchema, htmlTemplateDAO db.HTMLTemplateDAO) ([]string, error) {
+	t := template.Must(template.New(templateData.Name).
+		Parse(templateData.Template))
+	params := ListTemplFields(t)
+
+	htmlTemplateDAO.SaveTemplate(ctx, templateData, params, t)
+	return params, nil
 }

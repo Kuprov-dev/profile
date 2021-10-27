@@ -100,9 +100,6 @@ func (service *HttpAuthServiceProvider) CheckUserIsAuthenticated(ctx context.Con
 		return &user, refreshedTokens, errors.NewRequestError(500, errors.ClientRequestError, err)
 	}
 
-	// req.Header.Set("Authorization", creds.AccessToken)
-	// req.Header.Set("Refresh", creds.RefreshToken)
-
 	resp, err := client.Do(req)
 	if err != nil {
 		return &user, refreshedTokens, errors.NewRequestError(503, errors.AuthServiceUnavailableError, err)

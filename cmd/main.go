@@ -26,6 +26,7 @@ func main() {
 
 	authService := providers.HttpAuthServiceProvider{Config: config}
 	userDAO := db.InMemroyUserDAO{}
+	htmlTemplateDAO := db.NewFSTemplateDAO("./html_templates/")
 
 	r := mux.NewRouter()
 
@@ -33,7 +34,7 @@ func main() {
 	r.Handle("/receivers/{id:[0-9]+}/", profile.ReceiversListHandler(config, &userDAO, &authService)).Methods("GET")
 	r.Handle("/receivers/{id:[0-9]+}/", profile.AddRecieverHandler(config, &userDAO, &authService)).Methods("POST")
 	r.Handle("/receivers/{id:[0-9]+}/", profile.RemoveRecieverHandler(config, &userDAO, &authService)).Methods("DELETE")
-	r.Handle("/upload_template", profile.UploadHTMLTemplate(config, &userDAO, &authService)).Methods("POST")
+	r.Handle("/upload_template", profile.UploadHTMLTemplate(config, htmlTemplateDAO, &authService)).Methods("POST")
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop,

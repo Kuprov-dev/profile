@@ -1,7 +1,7 @@
 package models
 
 import (
-	"text/template"
+	"html/template"
 	"time"
 
 	"github.com/google/uuid"
@@ -34,10 +34,22 @@ type UserRemoveReciever struct {
 	ReceiverUsername string `json:"receiver_username"`
 }
 
+type HTMLTeplateCreateSchema struct {
+	Name     string `json:"name"`
+	Template string `json:"template"`
+}
+
 type HTMLTeplate struct {
-	Uuid     uuid.UUID         `json:"uuid"`
-	Name     string            `json:"name"`
-	Template template.Template `json:"template"`
+	Uuid     uuid.UUID          `json:"uuid"`
+	Name     string             `json:"name"`
+	Template *template.Template `json:"template"`
+}
+
+type HTMLTeplateDumpSchema struct {
+	Uuid     uuid.UUID `json:"uuid"`
+	Name     string    `json:"name"`
+	Template string    `json:"template"`
+	Params   []string  `json:"params"`
 }
 
 type TokenCredentials struct {
@@ -50,4 +62,8 @@ type RefreshedTokenCreds struct {
 	RefreshedToken        string
 	RefreshExpirationTime time.Time
 	AccessExpirationTime  time.Time
+}
+
+type HTMLTeplateParsedParamsResponse struct {
+	Params []string
 }
