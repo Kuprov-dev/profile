@@ -33,6 +33,7 @@ func main() {
 	r.Handle("/receivers/{id:[0-9]+}/", profile.ReceiversListHandler(config, &userDAO, &authService)).Methods("GET")
 	r.Handle("/receivers/{id:[0-9]+}/", profile.AddRecieverHandler(config, &userDAO, &authService)).Methods("POST")
 	r.Handle("/receivers/{id:[0-9]+}/", profile.RemoveRecieverHandler(config, &userDAO, &authService)).Methods("DELETE")
+	r.Handle("/upload_template", profile.UploadHTMLTemplate(config, &userDAO, &authService)).Methods("POST")
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop,

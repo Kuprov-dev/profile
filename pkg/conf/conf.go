@@ -25,7 +25,7 @@ func New() *Config {
 		AuthServiceHost:            env.GetEnv("AUTH_SERVICE_HOST", "http://localhost"),
 		AuthServicePort:            env.GetEnv("AUTH_SERVICE_PORT", "8080"),
 		AuthServiceProfileDetails:  env.GetEnv("AUTH_SERVICE_PROFILE_DETAILS", "me"),
-		AuthServiceTokenValidation: env.GetEnv("AUTH_SERVICE_TOKEN_VALIDATION", "i"),
+		AuthServiceTokenValidation: env.GetEnv("AUTH_SERVICE_TOKEN_VALIDATION", "me"),
 		AuthServiceRetries:         getenvInt(env.GetEnv("AUTH_SERVICE_RETRIES", "3")),
 		AuthServiceRetryDelay:      getenvInt(env.GetEnv("AUTH_SERVICE_RETRY_DELAY", "500")),
 		SecretKeyAccess:            env.GetEnv("ACCESS_SECRET", "secretsecret"),

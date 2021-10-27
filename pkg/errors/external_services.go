@@ -20,6 +20,8 @@ const (
 	AuthServiceBadGatewayError
 	AuthServiceUnavailableError
 	UserNotFound
+	ExternalServiceBadGatewayError
+	ExternalServiceUnavailableError
 )
 
 /*-------------------------------------------------------------------*/

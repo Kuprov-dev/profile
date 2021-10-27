@@ -3,6 +3,9 @@ package profile
 import (
 	"context"
 	"log"
+	"net/http"
+	"profile_service/pkg/errors"
+	"profile_service/pkg/models"
 	"time"
 )
 
@@ -20,6 +23,18 @@ func Retry(effoctor Effoctor, retries int, delay time.Duration) Effoctor {
 				return err
 			}
 
+			// retry only if external service is unavailable
+			// TODO refactor for DRY
+			ve, ok := err.(*errors.RequestError)
+			if ok {
+				switch {
+				case ve.Errors&errors.UnauthorisedError != 0:
+					return err
+				case ve.Errors&errors.ForbiddenError != 0:
+					return err
+				}
+			}
+
 			select {
 			case <-time.After(delay):
 			case <-ctx.Done():
@@ -29,4 +44,21 @@ func Retry(effoctor Effoctor, retries int, delay time.Duration) Effoctor {
 
 		}
 	}
+}
+
+func RefreshTokenHeaders(w *http.ResponseWriter, refreshedTokenCreds *models.RefreshedTokenCreds) {
+	http.SetCookie(*w, &http.Cookie{
+		Name:     "Access",
+		Value:    refreshedTokenCreds.AccessToken,
+		Path:     "/",
+		Expires:  refreshedTokenCreds.AccessExpirationTime,
+		HttpOnly: true,
+	})
+	http.SetCookie(*w, &http.Cookie{
+		Name:     "Refresh",
+		Value:    refreshedTokenCreds.RefreshedToken,
+		Path:     "/",
+		Expires:  refreshedTokenCreds.RefreshExpirationTime,
+		HttpOnly: true,
+	})
 }

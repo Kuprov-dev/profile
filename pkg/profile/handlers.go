@@ -128,7 +128,7 @@ func ReceiversListHandler(config *conf.Config, userDAO db.UserDAO, authService p
 	}
 
 	// TODO подумать почему приходится инжектить несколько раз и исправить
-	isAuthenticatedMiddleware := IsAuthenticated(config, userDAO, authService)
+	isAuthenticatedMiddleware := IsAuthenticatedOrRefreshTokens(config, authService)
 	isOwnerMiddleware := IsOwner(config, userDAO, authService)
 
 	return isAuthenticatedMiddleware(isOwnerMiddleware(http.HandlerFunc(handler)))
@@ -176,7 +176,7 @@ func AddRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService pro
 	}
 
 	// TODO подумать почему приходится инжектить несколько раз и исправить
-	isAuthenticatedMiddleware := IsAuthenticated(config, userDAO, authService)
+	isAuthenticatedMiddleware := IsAuthenticatedOrRefreshTokens(config, authService)
 	isOwnerMiddleware := IsOwner(config, userDAO, authService)
 
 	return isAuthenticatedMiddleware(isOwnerMiddleware(http.HandlerFunc(handler)))
@@ -223,8 +223,20 @@ func RemoveRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService 
 		w.WriteHeader(http.StatusOK)
 	}
 
-	isAuthenticatedMiddleware := IsAuthenticated(config, userDAO, authService)
+	isAuthenticatedMiddleware := IsAuthenticatedOrRefreshTokens(config, authService)
 	isOwnerMiddleware := IsOwner(config, userDAO, authService)
 
 	return isAuthenticatedMiddleware(isOwnerMiddleware(http.HandlerFunc(handler)))
+}
+
+// Ручка удаления из списока рассылки юзера
+func UploadHTMLTemplate(config *conf.Config, userDAO db.UserDAO, authService providers.AuthServiceProvider) http.Handler {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+	}
+
+	isAuthenticatedMiddleware := IsAuthenticatedOrRefreshTokens(config, authService)
+
+	return isAuthenticatedMiddleware(http.HandlerFunc(handler))
 }

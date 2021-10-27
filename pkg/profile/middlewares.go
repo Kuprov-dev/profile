@@ -2,6 +2,7 @@ package profile
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"profile_service/pkg/conf"
 	"profile_service/pkg/db"
@@ -17,8 +18,8 @@ type ContextKey string
 const ContextUserDetailsKey ContextKey = "userDetails"
 const ContextUserIdKey ContextKey = "userId"
 
-// мидлварь чтобы проверить что юзер это самое
-func IsAuthenticated(config *conf.Config, userDao db.UserDAO, authService providers.AuthServiceProvider) func(http.Handler) http.Handler {
+// мидлварь чтобы проверить что юзер это самое или обновить токены
+func IsAuthenticatedOrRefreshTokens(config *conf.Config, authService providers.AuthServiceProvider) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			creds := models.UserCredentials{
@@ -26,7 +27,7 @@ func IsAuthenticated(config *conf.Config, userDao db.UserDAO, authService provid
 				RefreshToken: r.Header.Get("Refresh"),
 			}
 
-			userDetails, err := checkUserIsAuthenticated(r.Context(), &creds, config, authService)
+			userDetails, refreshedTokens, err := checkUserIsAuthenticated(r.Context(), &creds, config, authService)
 
 			if err != nil {
 				ve, ok := err.(*errors.RequestError)
@@ -64,7 +65,10 @@ func IsAuthenticated(config *conf.Config, userDao db.UserDAO, authService provid
 					return
 				}
 			}
-
+			if refreshedTokens != nil {
+				log.Println("Refreshing tokens")
+				RefreshTokenHeaders(&w, refreshedTokens)
+			}
 			ctx := context.WithValue(r.Context(), ContextUserDetailsKey, userDetails)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})

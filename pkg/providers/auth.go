@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -16,7 +17,7 @@ import (
 // Инкапсулирует обращения к сервису auth
 type AuthServiceProvider interface {
 	GetUserData(creds *models.UserCredentials) (*models.UserDetails, error)
-	CheckUserIsAuthenticated(ctx context.Context, creds *models.UserCredentials) (*models.UserDetails, error)
+	CheckUserIsAuthenticated(ctx context.Context, creds *models.UserCredentials) (*models.UserDetails, *models.RefreshedTokenCreds, error)
 }
 
 type HttpAuthServiceProvider struct {
@@ -34,7 +35,7 @@ func (service *HttpAuthServiceProvider) GetUserData(creds *models.UserCredential
 
 	if err != nil {
 		log.Println("Credentials marshaling error")
-		return &user, errors.NewRequestError(400, errors.CredsMarshalingError, err)
+		return &user, errors.NewRequestError(400, errors.CredsMarshalingError, fmt.Errorf("Credentials marshaling error"))
 	}
 
 	url := service.Config.GetAuthServiceProfileDetailsUrl()
@@ -44,7 +45,7 @@ func (service *HttpAuthServiceProvider) GetUserData(creds *models.UserCredential
 
 	if err != nil {
 		log.Println("Auth service is unavailable")
-		return &user, errors.NewRequestError(503, errors.AuthServiceUnavailableError, err)
+		return &user, errors.NewRequestError(503, errors.AuthServiceUnavailableError, fmt.Errorf("Auth service is unavailable"))
 	}
 
 	defer resp.Body.Close()
@@ -52,7 +53,7 @@ func (service *HttpAuthServiceProvider) GetUserData(creds *models.UserCredential
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Println("Read response body error")
-		return &user, errors.NewRequestError(500, errors.ClientRequestError, err)
+		return &user, errors.NewRequestError(500, errors.ClientRequestError, fmt.Errorf("Read response body error"))
 	}
 
 	// TODO refactor for DRY using errors map for example
@@ -76,23 +77,35 @@ func (service *HttpAuthServiceProvider) GetUserData(creds *models.UserCredential
 
 }
 
-func (service *HttpAuthServiceProvider) CheckUserIsAuthenticated(ctx context.Context, creds *models.UserCredentials) (*models.UserDetails, error) {
+func (service *HttpAuthServiceProvider) CheckUserIsAuthenticated(ctx context.Context, creds *models.UserCredentials) (*models.UserDetails, *models.RefreshedTokenCreds, error) {
 	var user models.UserDetails
+	var refreshedTokens *models.RefreshedTokenCreds
 
 	client := http.Client{}
 
 	url := service.Config.GetAuthServiceTokenValidationUrl()
-	req, err := http.NewRequest("GET", url, nil)
+
+	b := new(bytes.Buffer)
+	err := json.NewEncoder(b).Encode(models.TokenCredentials{
+		AccessToken:  creds.AccessToken,
+		RefreshToken: creds.RefreshToken,
+	})
+
 	if err != nil {
-		return &user, errors.NewRequestError(500, errors.ClientRequestError, err)
+		return &user, refreshedTokens, errors.NewRequestError(500, errors.ClientRequestError, err)
 	}
 
-	req.Header.Set("Authorization", creds.AccessToken)
-	req.Header.Set("Refresh", creds.RefreshToken)
+	req, err := http.NewRequest("POST", url, b)
+	if err != nil {
+		return &user, refreshedTokens, errors.NewRequestError(500, errors.ClientRequestError, err)
+	}
+
+	// req.Header.Set("Authorization", creds.AccessToken)
+	// req.Header.Set("Refresh", creds.RefreshToken)
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return &user, errors.NewRequestError(503, errors.AuthServiceUnavailableError, err)
+		return &user, refreshedTokens, errors.NewRequestError(503, errors.AuthServiceUnavailableError, err)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -100,27 +113,28 @@ func (service *HttpAuthServiceProvider) CheckUserIsAuthenticated(ctx context.Con
 
 	if err != nil {
 		log.Println("Read response body error")
-		return &user, errors.NewRequestError(500, errors.ClientRequestError, err)
+		return &user, refreshedTokens, errors.NewRequestError(500, errors.ClientRequestError, err)
 	}
 	log.Println("Response from auth service: ", resp.Status)
 
 	switch resp.StatusCode {
 	case 400:
-		return &user, errors.NewRequestError(400, errors.BadRequestError, err)
+		return &user, refreshedTokens, errors.NewRequestError(400, errors.BadRequestError, err)
 	case 401:
-		return &user, errors.NewRequestError(401, errors.UnauthorisedError, err)
+		return &user, refreshedTokens, errors.NewRequestError(401, errors.UnauthorisedError, err)
 	case 403:
-		return &user, errors.NewRequestError(403, errors.ForbiddenError, err)
+		return &user, refreshedTokens, errors.NewRequestError(403, errors.ForbiddenError, err)
 	case 200:
 		err = json.Unmarshal(body, &user)
 		log.Println("User:", user)
 		if err != nil {
 			log.Println("Unmarshal auth response error")
-			return &user, errors.NewRequestError(500, errors.ClientRequestError, err)
+			return &user, refreshedTokens, errors.NewRequestError(500, errors.ClientRequestError, err)
 		}
-		return &user, nil
+		refreshedTokens = getTokenCookiesFromResponse(resp)
+		return &user, refreshedTokens, nil
 	default:
-		return &user, errors.NewRequestError(502, errors.AuthServiceBadGatewayError, err)
+		return &user, refreshedTokens, errors.NewRequestError(502, errors.AuthServiceBadGatewayError, err)
 	}
 
 }
