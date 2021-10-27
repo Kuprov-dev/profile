@@ -10,6 +10,8 @@ import (
 	"profile_service/pkg/models"
 	"profile_service/pkg/providers"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // Интерактор, который инкапсулирует логику работы с AuthServiceProvider
@@ -68,10 +70,10 @@ func getUserReceivers(username string, userDAO db.UserDAO) (*models.UserReciever
 	return &receivers, nil
 }
 
-// Интерактор который сопоставляет Id из path и username, проверяет, что это это один и тот же юзер
+// Интерактор который сопоставляет UUID из path и username, проверяет, что это это один и тот же юзер
 // Служит для авторизации, кмк нужно переделать
-func checkIsTheSameUser(userId int, username string, userDAO db.UserDAO) bool {
-	user := userDAO.GetById(userId)
+func checkIsTheSameUser(userUUID uuid.UUID, username string, userDAO db.UserDAO) bool {
+	user := userDAO.GetByUUID(userUUID)
 	if user == nil {
 		return false
 	}
@@ -80,43 +82,25 @@ func checkIsTheSameUser(userId int, username string, userDAO db.UserDAO) bool {
 }
 
 // Интерактор который добавляет айди юзера в список рассылки
-func addReciever(userId int, receiverUsername string, userDAO db.UserDAO) error {
-	user := userDAO.GetById(userId)
+func addReciever(userUUID uuid.UUID, receiverEmail string, userDAO db.UserDAO) error {
+	user := userDAO.GetByUUID(userUUID)
 	if user == nil {
 		return requestErrors.NewUserDAOError(requestErrors.UserNotFoundInDB, nil)
 	}
 
-	receiver := userDAO.GetByUsername(receiverUsername)
-	if receiver == nil {
-		return requestErrors.NewUserDAOError(requestErrors.ReceiverNotFoundInDB, nil)
-	}
-
-	if userId == receiver.ID {
-		return requestErrors.NewUserDAOError(requestErrors.SameUser, nil)
-	}
-
-	err := userDAO.AddReceiver(user.ID, receiver.ID)
+	err := userDAO.AddReceiver(userUUID, receiverEmail)
 
 	return err
 }
 
 // Интерактор для удаления юзера из списка рассылки
-func removeReciever(userId int, receiverUsername string, userDAO db.UserDAO) error {
-	user := userDAO.GetById(userId)
+func removeReciever(userUUID uuid.UUID, receiverEmail string, userDAO db.UserDAO) error {
+	user := userDAO.GetByUUID(userUUID)
 	if user == nil {
 		return requestErrors.NewUserDAOError(requestErrors.UserNotFoundInDB, nil)
 	}
 
-	receiver := userDAO.GetByUsername(receiverUsername)
-	if receiver == nil {
-		return requestErrors.NewUserDAOError(requestErrors.ReceiverNotFoundInDB, nil)
-	}
-
-	if userId == receiver.ID {
-		return requestErrors.NewUserDAOError(requestErrors.SameUser, nil)
-	}
-
-	err := userDAO.RemoveReceiver(user.ID, receiver.ID)
+	err := userDAO.RemoveReceiver(user.UUID, receiverEmail)
 
 	return err
 }

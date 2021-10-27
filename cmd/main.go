@@ -31,9 +31,9 @@ func main() {
 	r := mux.NewRouter()
 
 	r.Handle("/i", profile.ProfileDetailsHandler(config, &authService))
-	r.Handle("/receivers/{id:[0-9]+}/", profile.ReceiversListHandler(config, &userDAO, &authService)).Methods("GET")
-	r.Handle("/receivers/{id:[0-9]+}/", profile.AddRecieverHandler(config, &userDAO, &authService)).Methods("POST")
-	r.Handle("/receivers/{id:[0-9]+}/", profile.RemoveRecieverHandler(config, &userDAO, &authService)).Methods("DELETE")
+	r.Handle("/receivers/{uuid}/", profile.ReceiversListHandler(config, &userDAO, &authService)).Methods("GET")
+	r.Handle("/receivers/{uuid}/", profile.AddRecieverHandler(config, &userDAO, &authService)).Methods("POST")
+	r.Handle("/receivers/{uuid}/", profile.RemoveRecieverHandler(config, &userDAO, &authService)).Methods("DELETE")
 	r.Handle("/upload_template", profile.UploadHTMLTemplate(config, htmlTemplateDAO, &authService)).Methods("POST")
 
 	stop := make(chan os.Signal, 1)

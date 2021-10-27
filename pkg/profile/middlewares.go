@@ -4,19 +4,21 @@ import (
 	"context"
 	"log"
 	"net/http"
+
+	"github.com/google/uuid"
+
 	"profile_service/pkg/conf"
 	"profile_service/pkg/db"
 	"profile_service/pkg/errors"
 	"profile_service/pkg/models"
 	"profile_service/pkg/providers"
-	"strconv"
 	"strings"
 )
 
 type ContextKey string
 
 const ContextUserDetailsKey ContextKey = "userDetails"
-const ContextUserIdKey ContextKey = "userId"
+const ContextUserUUIDKey ContextKey = "userUUID"
 
 // мидлварь чтобы проверить что юзер это самое или обновить токены
 func IsAuthenticatedOrRefreshTokens(config *conf.Config, authService providers.AuthServiceProvider) func(http.Handler) http.Handler {
@@ -89,14 +91,19 @@ func IsOwner(config *conf.Config, userDao db.UserDAO, authService providers.Auth
 			}
 
 			urlPath := strings.Split(r.URL.Path, "/")
-			userId, _ := strconv.Atoi(urlPath[len(urlPath)-2])
+			userUUID, err := uuid.Parse(urlPath[len(urlPath)-2])
 
-			if !checkIsTheSameUser(userId, user.Username, userDao) {
+			if err != nil {
+				makeBadRequestErrorResponse(&w, "Not valid uuid path param.")
+				return
+			}
+
+			if !checkIsTheSameUser(userUUID, user.Username, userDao) {
 				makeForbiddenErrorResponse(&w)
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), ContextUserIdKey, userId)
+			ctx := context.WithValue(r.Context(), ContextUserUUIDKey, userUUID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

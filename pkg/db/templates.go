@@ -15,12 +15,12 @@ import (
 var HTMLTemplates map[uuid.UUID]*models.HTMLTeplate
 
 func init() {
-	firstUuid := uuid.New()
+	firstUUID := uuid.New()
 	template, _ := template.New("test").
 		Parse(`<h1>{{ .name }} {{ .age }}<h2>{{ .key}}</h2></h1>`)
 	HTMLTemplates = map[uuid.UUID]*models.HTMLTeplate{
-		firstUuid: {
-			Uuid:     firstUuid,
+		firstUUID: {
+			UUID:     firstUUID,
 			Name:     "test",
 			Template: template,
 		},
@@ -40,11 +40,11 @@ func NewInMemoryTemplateDAO() *InMemoryTemplateDAO {
 
 func (dao *InMemoryTemplateDAO) SaveTemplate(ctx context.Context, templateData *models.HTMLTeplateCreateSchema, template *template.Template) *models.HTMLTeplate {
 	templateObj := &models.HTMLTeplate{
-		Uuid:     uuid.New(),
+		UUID:     uuid.New(),
 		Name:     templateData.Name,
 		Template: template,
 	}
-	HTMLTemplates[templateObj.Uuid] = templateObj
+	HTMLTemplates[templateObj.UUID] = templateObj
 	return templateObj
 }
 
@@ -61,13 +61,13 @@ func NewFSTemplateDAO(rootDirectory string) *FSTemplateDAO {
 
 func (dao *FSTemplateDAO) SaveTemplate(ctx context.Context, templateData *models.HTMLTeplateCreateSchema, params []string, template *template.Template) (*models.HTMLTeplate, error) {
 	templateObj := &models.HTMLTeplate{
-		Uuid:     uuid.New(),
+		UUID:     uuid.New(),
 		Name:     templateData.Name,
 		Template: template,
 	}
-	HTMLTemplates[templateObj.Uuid] = templateObj
+	HTMLTemplates[templateObj.UUID] = templateObj
 
-	file, fileCreateError := os.Create(fmt.Sprintf("%s/%s.json", dao.RootDirectory, templateObj.Uuid.String()))
+	file, fileCreateError := os.Create(fmt.Sprintf("%s/%s.json", dao.RootDirectory, templateObj.UUID.String()))
 	if fileCreateError != nil {
 		return nil, fileCreateError
 	}
@@ -78,7 +78,7 @@ func (dao *FSTemplateDAO) SaveTemplate(ctx context.Context, templateData *models
 	encoder := json.NewEncoder(w)
 	encoder.SetEscapeHTML(false)
 	writeFileError := encoder.Encode(models.HTMLTeplateDumpSchema{
-		Uuid:     templateObj.Uuid,
+		UUID:     templateObj.UUID,
 		Name:     templateObj.Name,
 		Template: templateData.Template,
 		Params:   params,

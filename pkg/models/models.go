@@ -8,9 +8,9 @@ import (
 )
 
 type User struct {
-	ID        int    `json:"id"`
-	Username  string `json:"username"`
-	Receivers []int  `json:"receivers"`
+	UUID      uuid.UUID `json:"uuidd"`
+	Username  string    `json:"username"`
+	Receivers []string  `json:"receivers"`
 }
 
 type UserDetails struct {
@@ -23,7 +23,7 @@ type UserCredentials struct {
 }
 
 type UserRecievers struct {
-	Receivers []int `json:"receivers"`
+	Receivers []string `json:"receivers"`
 }
 
 type UserAddReceiver struct {
@@ -40,13 +40,13 @@ type HTMLTeplateCreateSchema struct {
 }
 
 type HTMLTeplate struct {
-	Uuid     uuid.UUID          `json:"uuid"`
+	UUID     uuid.UUID          `json:"uuid"`
 	Name     string             `json:"name"`
 	Template *template.Template `json:"template"`
 }
 
 type HTMLTeplateDumpSchema struct {
-	Uuid     uuid.UUID `json:"uuid"`
+	UUID     uuid.UUID `json:"uuid"`
 	Name     string    `json:"name"`
 	Template string    `json:"template"`
 	Params   []string  `json:"params"`

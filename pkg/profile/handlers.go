@@ -11,6 +11,7 @@ import (
 	"profile_service/pkg/models"
 	"profile_service/pkg/providers"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -137,9 +138,9 @@ func ReceiversListHandler(config *conf.Config, userDAO db.UserDAO, authService p
 // Ручка добавления в список рассылки юзера
 func AddRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService providers.AuthServiceProvider) http.Handler {
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		userValue := r.Context().Value(ContextUserIdKey)
+		userValue := r.Context().Value(ContextUserUUIDKey)
 
-		userId, ok := userValue.(int)
+		userUUID, ok := userValue.(uuid.UUID)
 		if !ok {
 			makeBadRequestErrorResponse(&w, "bruh")
 			return
@@ -164,7 +165,7 @@ func AddRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService pro
 			makeBadRequestErrorResponse(&w, "bruh")
 		}
 
-		err = addReciever(userId, addReceiverData.ReceiverUsername, userDAO)
+		err = addReciever(userUUID, addReceiverData.ReceiverUsername, userDAO)
 
 		if err != nil {
 			makeBadRequestErrorResponse(&w, err.Error())
@@ -185,9 +186,9 @@ func AddRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService pro
 // Ручка удаления из списока рассылки юзера
 func RemoveRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService providers.AuthServiceProvider) http.Handler {
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		userValue := r.Context().Value(ContextUserIdKey)
+		userValue := r.Context().Value(ContextUserUUIDKey)
 
-		userId, ok := userValue.(int)
+		userId, ok := userValue.(uuid.UUID)
 		if !ok {
 			makeBadRequestErrorResponse(&w, "bruh")
 			return

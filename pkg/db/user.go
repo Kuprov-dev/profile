@@ -1,32 +1,41 @@
 package db
 
 import (
+	"fmt"
 	"profile_service/pkg/errors"
 	"profile_service/pkg/models"
+
+	"github.com/google/uuid"
 )
 
 type UserDAO interface {
 	GetByUsername(username string) *models.User
-	GetById(id int) *models.User
-	AddReceiver(userId, receiverId int) error
-	RemoveReceiver(userId, receiverId int) error
+	GetByUUID(userUUID uuid.UUID) *models.User
+	AddReceiver(userUUID uuid.UUID, recieverEmail string) error
+	RemoveReceiver(userUUID uuid.UUID, receiverEmail string) error
 }
 
-var Users map[int]*models.User
+var Users map[uuid.UUID]*models.User
 
 func init() {
-	Users = map[int]*models.User{
-		1: {
-			ID:        1,
+	uuids := []uuid.UUID{
+		uuid.New(),
+		uuid.New(),
+		uuid.New(),
+	}
+	fmt.Println(uuids)
+	Users = map[uuid.UUID]*models.User{
+		uuids[0]: {
+			UUID:      uuids[0],
 			Username:  "user1",
-			Receivers: []int{1},
+			Receivers: []string{"test@mail.ru"},
 		},
-		2: {
-			ID:       2,
+		uuids[1]: {
+			UUID:     uuids[1],
 			Username: "user2",
 		},
-		3: {
-			ID:       3,
+		uuids[2]: {
+			UUID:     uuids[2],
 			Username: "user3",
 		},
 	}
@@ -48,8 +57,8 @@ func (*InMemroyUserDAO) GetByUsername(username string) *models.User {
 	return user
 }
 
-func (*InMemroyUserDAO) GetById(id int) *models.User {
-	user, ok := Users[id]
+func (*InMemroyUserDAO) GetByUUID(userUUID uuid.UUID) *models.User {
+	user, ok := Users[userUUID]
 	if !ok {
 		return nil
 	}
@@ -57,32 +66,30 @@ func (*InMemroyUserDAO) GetById(id int) *models.User {
 	return user
 }
 
-func (*InMemroyUserDAO) AddReceiver(userId, receiverId int) error {
-	user, ok := Users[userId]
+func (*InMemroyUserDAO) AddReceiver(userUUID uuid.UUID, recieverEmail string) error {
+	user, ok := Users[userUUID]
 	if !ok {
 		return errors.NewUserDAOError(errors.UserNotFoundInDB, nil)
 	}
-	_, ok = Users[receiverId]
-	if !ok {
-		return errors.NewUserDAOError(errors.ReceiverNotFoundInDB, nil)
-	}
-	user.Receivers = append(user.Receivers, receiverId)
+
+	user.Receivers = append(user.Receivers, recieverEmail)
 
 	return nil
 }
 
-func (*InMemroyUserDAO) RemoveReceiver(userId, receiverId int) error {
-	user, ok := Users[userId]
+func (*InMemroyUserDAO) RemoveReceiver(userUUID uuid.UUID, recieverEmail string) error {
+	user, ok := Users[userUUID]
 	if !ok {
 		return errors.NewUserDAOError(errors.UserNotFoundInDB, nil)
 	}
-	_, ok = Users[receiverId]
+
+	ok = contains(user.Receivers, recieverEmail)
 	if !ok {
 		return errors.NewUserDAOError(errors.ReceiverNotFoundInDB, nil)
 	}
 
-	for ind, id := range user.Receivers {
-		if id == receiverId {
+	for ind, email := range user.Receivers {
+		if email == recieverEmail {
 			user.Receivers = append(user.Receivers[:ind], user.Receivers[ind+1:]...)
 			return nil
 		}
