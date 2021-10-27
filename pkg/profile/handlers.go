@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"net/mail"
 	"profile_service/pkg/conf"
 	"profile_service/pkg/db"
 	"profile_service/pkg/errors"
 	logging "profile_service/pkg/log"
 	"profile_service/pkg/models"
 	"profile_service/pkg/providers"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -142,12 +144,7 @@ func AddRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService pro
 
 		userUUID, ok := userValue.(uuid.UUID)
 		if !ok {
-			makeBadRequestErrorResponse(&w, "bruh")
-			return
-		}
-
-		if !ok {
-			makeBadRequestErrorResponse(&w, "bruh")
+			makeBadRequestErrorResponse(&w, "Get userUUID from context error.")
 			return
 		}
 
@@ -155,17 +152,24 @@ func AddRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService pro
 		defer r.Body.Close()
 
 		if err != nil {
-			makeBadRequestErrorResponse(&w, "bruh")
+			makeBadRequestErrorResponse(&w, "Read from body error.")
+			return
 		}
 
 		var addReceiverData models.UserAddReceiver
 		err = json.Unmarshal(body, &addReceiverData)
 
-		if err != nil {
-			makeBadRequestErrorResponse(&w, "bruh")
+		if err != nil || addReceiverData.ReceiverEmail == "" {
+			makeBadRequestErrorResponse(&w, "Receiver email is empty")
+			return
 		}
 
-		err = addReciever(userUUID, addReceiverData.ReceiverUsername, userDAO)
+		if _, err := mail.ParseAddress(addReceiverData.ReceiverEmail); err != nil {
+			makeBadRequestErrorResponse(&w, err.Error())
+			return
+		}
+
+		err = addReciever(userUUID, strings.ToLower(addReceiverData.ReceiverEmail), userDAO)
 
 		if err != nil {
 			makeBadRequestErrorResponse(&w, err.Error())
@@ -213,7 +217,7 @@ func RemoveRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService 
 			makeBadRequestErrorResponse(&w, "bruh")
 		}
 
-		err = removeReciever(userId, removeReceiverData.ReceiverUsername, userDAO)
+		err = removeReciever(userId, strings.ToLower(removeReceiverData.ReceiverEmail), userDAO)
 
 		if err != nil {
 			makeBadRequestErrorResponse(&w, err.Error())

@@ -72,6 +72,11 @@ func (*InMemroyUserDAO) AddReceiver(userUUID uuid.UUID, recieverEmail string) er
 		return errors.NewUserDAOError(errors.UserNotFoundInDB, nil)
 	}
 
+	ok = contains(user.Receivers, recieverEmail)
+	if ok {
+		return errors.NewUserDAOError(errors.DublicateReceiver, nil)
+	}
+
 	user.Receivers = append(user.Receivers, recieverEmail)
 
 	return nil

@@ -84,6 +84,7 @@ func checkIsTheSameUser(userUUID uuid.UUID, username string, userDAO db.UserDAO)
 // Интерактор который добавляет айди юзера в список рассылки
 func addReciever(userUUID uuid.UUID, receiverEmail string, userDAO db.UserDAO) error {
 	user := userDAO.GetByUUID(userUUID)
+
 	if user == nil {
 		return requestErrors.NewUserDAOError(requestErrors.UserNotFoundInDB, nil)
 	}

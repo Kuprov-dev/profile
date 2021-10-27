@@ -27,11 +27,11 @@ type UserRecievers struct {
 }
 
 type UserAddReceiver struct {
-	ReceiverUsername string `json:"receiver_username"`
+	ReceiverEmail string `json:"receiver_email"`
 }
 
 type UserRemoveReciever struct {
-	ReceiverUsername string `json:"receiver_username"`
+	ReceiverEmail string `json:"receiver_email"`
 }
 
 type HTMLTeplateCreateSchema struct {

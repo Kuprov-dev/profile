@@ -15,6 +15,7 @@ const (
 	UserNotFoundInDB uint16 = 1 << iota
 	ReceiverNotFoundInDB
 	ReceiverNotInList
+	DublicateReceiver
 	SameUser
 )
 
@@ -22,8 +23,9 @@ const (
 
 var UserDAOErrorDescriptionMap = map[int]string{
 	int(UserNotFoundInDB):     "User not found.",
-	int(ReceiverNotFoundInDB): "Receiver found.",
+	int(ReceiverNotFoundInDB): "Receiver not found.",
 	int(ReceiverNotInList):    "Receiver not in list.",
+	int(DublicateReceiver):    "Receiver is already in list.",
 	int(SameUser):             "Receiver can not be the same user.",
 }
 
