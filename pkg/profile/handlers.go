@@ -36,6 +36,7 @@ func ProfileDetailsHandler(config *conf.Config, userDAO db.UserDAO, authService 
 
 		if err != nil {
 			makeBadRequestErrorResponse(&w, err.Error())
+			return
 		}
 
 		if resp, err := json.Marshal(userDetails); err != nil {
