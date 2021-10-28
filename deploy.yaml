@@ -17,7 +17,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
       - name: profile
-        image: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}
+        image: ${REGISTRY_IMAGE}:${COMMIT_REF_NAME}
         imagePullPolicy: "Always"
         ports:
         - containerPort: 8000
