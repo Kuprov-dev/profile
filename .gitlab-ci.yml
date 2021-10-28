@@ -47,15 +47,7 @@ build image:
     - export K8S_CONTAINER_NAME=$CI_PROJECT_NAME
     - export K8S_NS=$(echo $CI_PROJECT_PATH | awk -F\/ '{print $(NF-1)}')
     - echo "Deploy $K8S_WORKLOAD_TYPE $K8S_WORKLOAD_NAME to namespace $K8S_NS"
-    - echo $CI_REGISTRY_IMAGE
-    - echo $CI_PROJECT_NAME
-    - echo $CI_COMMIT_REF_NAME
-
-
     - sed -i "s/<DEPLOYMENT_NAME>/$CI_PROJECT_NAME/g" deployment.yaml
-    # - sed -i "s/<REGISTRY_IMAGE>/$CI_REGISTRY_IMAGE/g" deployment.yaml
-    # - sed -i "s/<REGISTRY_IMAGE>/$CI_REGISTRY_IMAGE/g" deployment.yaml
-    # - sed -i "s/<COMMIT_REF_NAME>/$CI_COMMIT_REF_NAME/g" deployment.yaml
     - kubectl apply -f deployment.yaml --namespace=${K8S_NS}
     # - kubectl create deployment $K8S_WORKLOAD_NAME --image=$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME -n ${K8S_NS} || echo deployment already exists
     # - kubectl --record ${K8S_WORKLOAD_TYPE}.apps/${K8S_WORKLOAD_NAME} set image ${K8S_WORKLOAD_TYPE}.v1.apps/${K8S_WORKLOAD_NAME} ${K8S_CONTAINER_NAME}=$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME -n ${K8S_NS}
