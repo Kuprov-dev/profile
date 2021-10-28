@@ -53,7 +53,7 @@ build image:
 
 
     - sed -i "s/<DEPLOYMENT_NAME>/$CI_PROJECT_NAME/g" deployment.yaml
-    - sed -i "s/<REGISTRY_IMAGE>/$CI_REGISTRY_IMAGE/g" deployment.yaml
+    # - sed -i "s/<REGISTRY_IMAGE>/$CI_REGISTRY_IMAGE/g" deployment.yaml
     # - sed -i "s/<REGISTRY_IMAGE>/$CI_REGISTRY_IMAGE/g" deployment.yaml
     # - sed -i "s/<COMMIT_REF_NAME>/$CI_COMMIT_REF_NAME/g" deployment.yaml
     - kubectl apply -f deployment.yaml --namespace=${K8S_NS}
