@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"profile_service/pkg/errors"
 	"profile_service/pkg/models"
+	"profile_service/pkg/utils"
 
 	"github.com/google/uuid"
 )
@@ -72,7 +73,7 @@ func (*InMemroyUserDAO) AddReceiver(userUUID uuid.UUID, recieverEmail string) er
 		return errors.NewUserDAOError(errors.UserNotFoundInDB, nil)
 	}
 
-	ok = contains(user.Receivers, recieverEmail)
+	ok = utils.ContainsString(user.Receivers, recieverEmail)
 	if ok {
 		return errors.NewUserDAOError(errors.DublicateReceiver, nil)
 	}
@@ -88,7 +89,7 @@ func (*InMemroyUserDAO) RemoveReceiver(userUUID uuid.UUID, recieverEmail string)
 		return errors.NewUserDAOError(errors.UserNotFoundInDB, nil)
 	}
 
-	ok = contains(user.Receivers, recieverEmail)
+	ok = utils.ContainsString(user.Receivers, recieverEmail)
 	if !ok {
 		return errors.NewUserDAOError(errors.ReceiverNotFoundInDB, nil)
 	}
