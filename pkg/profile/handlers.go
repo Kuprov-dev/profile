@@ -8,13 +8,11 @@ import (
 	"profile_service/pkg/conf"
 	"profile_service/pkg/db"
 	"profile_service/pkg/errors"
-	logging "profile_service/pkg/log"
 	"profile_service/pkg/models"
 	"profile_service/pkg/providers"
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 type ResponseBody struct {
@@ -23,67 +21,34 @@ type ResponseBody struct {
 }
 
 // Базовая ручка, чтобы ходить на auth_service/me
-func ProfileDetailsHandler(config *conf.Config, authService providers.AuthServiceProvider) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		loggerValue := r.Context().Value(logging.LoggerCtxKey)
+func ProfileDetailsHandler(config *conf.Config, userDAO db.UserDAO, authService providers.AuthServiceProvider) http.Handler {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		userValue := r.Context().Value(ContextUserDetailsKey)
 
-		logger, ok := loggerValue.(*logrus.Entry)
+		userAuthDetails, ok := userValue.(*models.UserAuthDetails)
 
-		if ok {
-			logger.Println("Handle request by ProfileDetailsHandler")
+		if !ok {
+			makeInternalServerErrorResponse(&w)
+			return
 		}
 
-		creds := &models.UserCredentials{}
-		creds.AccessToken = r.Header.Get("Access")
-		creds.RefreshToken = r.Header.Get("Refresh")
-
-		userData, err := getUserDataFromAuthService(r.Context(), creds, authService, *config)
+		userDetails, err := getUserDetails(r.Context(), userAuthDetails.Username, userDAO)
 
 		if err != nil {
-			ve, ok := err.(*errors.RequestError)
-
-			if !ok {
-				makeInternalServerErrorResponse(&w)
-				return
-			}
-
-			// TODO refactor for DRY
-			switch {
-			case ve.Errors&errors.CredsMarshalingError != 0:
-				makeInternalServerErrorResponse(&w)
-				return
-			case ve.Errors&errors.ClientRequestError != 0:
-				makeInternalServerErrorResponse(&w)
-				return
-			case ve.Errors&errors.BadRequestError != 0:
-				makeBadRequestErrorResponse(&w, "Something goes wrong.")
-				return
-			case ve.Errors&errors.UnauthorisedError != 0:
-				makeUnathorisedErrorResponse(&w)
-				return
-			case ve.Errors&errors.ForbiddenError != 0:
-				makeForbiddenErrorResponse(&w)
-				return
-			case ve.Errors&errors.AuthServiceBadGatewayError != 0:
-				makeBadGatewayErrorResponse(&w)
-				return
-			case ve.Errors&errors.AuthServiceUnavailableError != 0:
-				makeServiceUnavailableErrorResponse(&w)
-				return
-			default:
-				makeBadRequestErrorResponse(&w, "bruuuh.")
-				return
-			}
+			makeBadRequestErrorResponse(&w, err.Error())
 		}
 
-		if resp, err := json.Marshal(userData); err != nil {
+		if resp, err := json.Marshal(userDetails); err != nil {
 			makeInternalServerErrorResponse(&w)
 		} else {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			w.Write(resp)
 		}
-	})
+	}
+
+	isAuthenticatedMiddleware := IsAuthenticatedOrRefreshTokens(config, authService)
+	return isAuthenticatedMiddleware(http.HandlerFunc(handler))
 }
 
 // Ручка списка рассылок для юзера. Возвращает айдишники юзеров
@@ -91,7 +56,7 @@ func ReceiversListHandler(config *conf.Config, userDAO db.UserDAO, authService p
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		userValue := r.Context().Value(ContextUserDetailsKey)
 
-		userDetails, ok := userValue.(*models.UserDetails)
+		userAuthDetails, ok := userValue.(*models.UserAuthDetails)
 
 		if !ok {
 			makeInternalServerErrorResponse(&w)
@@ -101,7 +66,7 @@ func ReceiversListHandler(config *conf.Config, userDAO db.UserDAO, authService p
 		var err error
 		var receivers *models.UserRecievers
 
-		receivers, err = getUserReceivers(userDetails.Username, userDAO)
+		receivers, err = getUserReceivers(userAuthDetails.Username, userDAO)
 
 		if err != nil {
 			ve, ok := err.(*errors.RequestError)

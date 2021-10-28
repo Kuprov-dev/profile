@@ -83,7 +83,7 @@ func IsOwner(config *conf.Config, userDao db.UserDAO, authService providers.Auth
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			userValue := r.Context().Value(ContextUserDetailsKey)
 
-			user, ok := userValue.(*models.UserDetails)
+			userAuthDetails, ok := userValue.(*models.UserAuthDetails)
 
 			if !ok {
 				makeInternalServerErrorResponse(&w)
@@ -98,7 +98,7 @@ func IsOwner(config *conf.Config, userDao db.UserDAO, authService providers.Auth
 				return
 			}
 
-			if !checkIsTheSameUser(userUUID, user.Username, userDao) {
+			if !checkIsTheSameUser(userUUID, userAuthDetails.Username, userDao) {
 				makeForbiddenErrorResponse(&w)
 				return
 			}

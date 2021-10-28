@@ -30,7 +30,7 @@ func main() {
 
 	r := mux.NewRouter()
 
-	r.Handle("/i", profile.ProfileDetailsHandler(config, &authService))
+	r.Handle("/i", profile.ProfileDetailsHandler(config, &userDAO, &authService))
 	r.Handle("/receivers/{uuid}/", profile.ReceiversListHandler(config, &userDAO, &authService)).Methods("GET")
 	r.Handle("/receivers/{uuid}/", profile.AddRecieverHandler(config, &userDAO, &authService)).Methods("POST")
 	r.Handle("/receivers/{uuid}/", profile.RemoveRecieverHandler(config, &userDAO, &authService)).Methods("DELETE")

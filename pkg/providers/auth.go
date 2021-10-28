@@ -16,8 +16,8 @@ import (
 // Интерфейс для реализации паттерна Provider
 // Инкапсулирует обращения к сервису auth
 type AuthServiceProvider interface {
-	GetUserData(creds *models.UserCredentials) (*models.UserDetails, error)
-	CheckUserIsAuthenticated(ctx context.Context, creds *models.UserCredentials) (*models.UserDetails, *models.RefreshedTokenCreds, error)
+	GetUserData(creds *models.UserCredentials) (*models.UserAuthDetails, error)
+	CheckUserIsAuthenticated(ctx context.Context, creds *models.UserCredentials) (*models.UserAuthDetails, *models.RefreshedTokenCreds, error)
 }
 
 type HttpAuthServiceProvider struct {
@@ -28,14 +28,14 @@ func NewHttpAuthServiceProvider(config *conf.Config) *HttpAuthServiceProvider {
 	return &HttpAuthServiceProvider{Config: config}
 }
 
-func (service *HttpAuthServiceProvider) GetUserData(creds *models.UserCredentials) (*models.UserDetails, error) {
+func (service *HttpAuthServiceProvider) GetUserData(creds *models.UserCredentials) (*models.UserAuthDetails, error) {
 	credsJSON, err := json.Marshal(creds)
 
-	var user models.UserDetails
+	var userAuthDetails models.UserAuthDetails
 
 	if err != nil {
 		log.Println("Credentials marshaling error")
-		return &user, errors.NewRequestError(400, errors.CredsMarshalingError, fmt.Errorf("Credentials marshaling error"))
+		return &userAuthDetails, errors.NewRequestError(400, errors.CredsMarshalingError, fmt.Errorf("Credentials marshaling error"))
 	}
 
 	url := service.Config.GetAuthServiceProfileDetailsUrl()
@@ -45,7 +45,7 @@ func (service *HttpAuthServiceProvider) GetUserData(creds *models.UserCredential
 
 	if err != nil {
 		log.Println("Auth service is unavailable")
-		return &user, errors.NewRequestError(503, errors.AuthServiceUnavailableError, fmt.Errorf("Auth service is unavailable"))
+		return &userAuthDetails, errors.NewRequestError(503, errors.AuthServiceUnavailableError, fmt.Errorf("Auth service is unavailable"))
 	}
 
 	defer resp.Body.Close()
@@ -53,32 +53,32 @@ func (service *HttpAuthServiceProvider) GetUserData(creds *models.UserCredential
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Println("Read response body error")
-		return &user, errors.NewRequestError(500, errors.ClientRequestError, fmt.Errorf("Read response body error"))
+		return &userAuthDetails, errors.NewRequestError(500, errors.ClientRequestError, fmt.Errorf("Read response body error"))
 	}
 
 	// TODO refactor for DRY using errors map for example
 	switch resp.StatusCode {
 	case 400:
-		return &user, errors.NewRequestError(400, errors.BadRequestError, err)
+		return &userAuthDetails, errors.NewRequestError(400, errors.BadRequestError, err)
 	case 401:
-		return &user, errors.NewRequestError(401, errors.UnauthorisedError, err)
+		return &userAuthDetails, errors.NewRequestError(401, errors.UnauthorisedError, err)
 	case 403:
-		return &user, errors.NewRequestError(403, errors.ForbiddenError, err)
+		return &userAuthDetails, errors.NewRequestError(403, errors.ForbiddenError, err)
 	case 200:
-		err = json.Unmarshal(body, &user)
+		err = json.Unmarshal(body, &userAuthDetails)
 		if err != nil {
 			log.Println("Unmarshal auth response error")
-			return &user, errors.NewRequestError(500, errors.ClientRequestError, err)
+			return &userAuthDetails, errors.NewRequestError(500, errors.ClientRequestError, err)
 		}
-		return &user, nil
+		return &userAuthDetails, nil
 	default:
-		return &user, errors.NewRequestError(502, errors.AuthServiceBadGatewayError, err)
+		return &userAuthDetails, errors.NewRequestError(502, errors.AuthServiceBadGatewayError, err)
 	}
 
 }
 
-func (service *HttpAuthServiceProvider) CheckUserIsAuthenticated(ctx context.Context, creds *models.UserCredentials) (*models.UserDetails, *models.RefreshedTokenCreds, error) {
-	var user models.UserDetails
+func (service *HttpAuthServiceProvider) CheckUserIsAuthenticated(ctx context.Context, creds *models.UserCredentials) (*models.UserAuthDetails, *models.RefreshedTokenCreds, error) {
+	var userAuthDetails models.UserAuthDetails
 	var refreshedTokens *models.RefreshedTokenCreds
 
 	client := http.Client{}
@@ -92,17 +92,17 @@ func (service *HttpAuthServiceProvider) CheckUserIsAuthenticated(ctx context.Con
 	})
 
 	if err != nil {
-		return &user, refreshedTokens, errors.NewRequestError(500, errors.ClientRequestError, err)
+		return &userAuthDetails, refreshedTokens, errors.NewRequestError(500, errors.ClientRequestError, err)
 	}
 
 	req, err := http.NewRequest("POST", url, b)
 	if err != nil {
-		return &user, refreshedTokens, errors.NewRequestError(500, errors.ClientRequestError, err)
+		return &userAuthDetails, refreshedTokens, errors.NewRequestError(500, errors.ClientRequestError, err)
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return &user, refreshedTokens, errors.NewRequestError(503, errors.AuthServiceUnavailableError, err)
+		return &userAuthDetails, refreshedTokens, errors.NewRequestError(503, errors.AuthServiceUnavailableError, err)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -110,28 +110,28 @@ func (service *HttpAuthServiceProvider) CheckUserIsAuthenticated(ctx context.Con
 
 	if err != nil {
 		log.Println("Read response body error")
-		return &user, refreshedTokens, errors.NewRequestError(500, errors.ClientRequestError, err)
+		return &userAuthDetails, refreshedTokens, errors.NewRequestError(500, errors.ClientRequestError, err)
 	}
 	log.Println("Response from auth service: ", resp.Status)
 
 	switch resp.StatusCode {
 	case 400:
-		return &user, refreshedTokens, errors.NewRequestError(400, errors.BadRequestError, err)
+		return &userAuthDetails, refreshedTokens, errors.NewRequestError(400, errors.BadRequestError, err)
 	case 401:
-		return &user, refreshedTokens, errors.NewRequestError(401, errors.UnauthorisedError, err)
+		return &userAuthDetails, refreshedTokens, errors.NewRequestError(401, errors.UnauthorisedError, err)
 	case 403:
-		return &user, refreshedTokens, errors.NewRequestError(403, errors.ForbiddenError, err)
+		return &userAuthDetails, refreshedTokens, errors.NewRequestError(403, errors.ForbiddenError, err)
 	case 200:
-		err = json.Unmarshal(body, &user)
-		log.Println("User:", user)
+		err = json.Unmarshal(body, &userAuthDetails)
+		log.Println("UserAuthDetails:", userAuthDetails)
 		if err != nil {
 			log.Println("Unmarshal auth response error")
-			return &user, refreshedTokens, errors.NewRequestError(500, errors.ClientRequestError, err)
+			return &userAuthDetails, refreshedTokens, errors.NewRequestError(500, errors.ClientRequestError, err)
 		}
 		refreshedTokens = getTokenCookiesFromResponse(resp)
-		return &user, refreshedTokens, nil
+		return &userAuthDetails, refreshedTokens, nil
 	default:
-		return &user, refreshedTokens, errors.NewRequestError(502, errors.AuthServiceBadGatewayError, err)
+		return &userAuthDetails, refreshedTokens, errors.NewRequestError(502, errors.AuthServiceBadGatewayError, err)
 	}
 
 }

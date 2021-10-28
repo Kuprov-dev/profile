@@ -13,7 +13,7 @@ type User struct {
 	Receivers []string  `json:"receivers"`
 }
 
-type UserDetails struct {
+type UserAuthDetails struct {
 	Username string `json:"username"`
 }
 

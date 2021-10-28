@@ -2,6 +2,7 @@ package profile
 
 import (
 	"context"
+	"fmt"
 	"html/template"
 	"log"
 	"profile_service/pkg/conf"
@@ -16,13 +17,13 @@ import (
 
 // Интерактор, который инкапсулирует логику работы с AuthServiceProvider
 // и ходит за данными юзера в сервис auth
-func getUserDataFromAuthService(ctx context.Context, creds *models.UserCredentials, authService providers.AuthServiceProvider, config conf.Config) (*models.UserDetails, error) {
-	var user *models.UserDetails
+func getUserDataFromAuthService(ctx context.Context, creds *models.UserCredentials, authService providers.AuthServiceProvider, config conf.Config) (*models.UserAuthDetails, error) {
+	var userAuthDetails *models.UserAuthDetails
 	var err error
 
 	effector := func(ctx context.Context) error {
-		user, err = authService.GetUserData(creds)
-		log.Println("Effector ", *user, err)
+		userAuthDetails, err = authService.GetUserData(creds)
+		log.Println("Effector ", *userAuthDetails, err)
 		if err != nil {
 			return err
 		}
@@ -32,19 +33,19 @@ func getUserDataFromAuthService(ctx context.Context, creds *models.UserCredentia
 	effectorWithRetry := Retry(effector, config.AuthServiceRetries, time.Duration(config.AuthServiceRetryDelay)*time.Millisecond)
 	err = effectorWithRetry(ctx)
 
-	return user, err
+	return userAuthDetails, err
 }
 
 // Интерактор, который инкапсулирует логику работы с AuthServiceProvider
 // и ходит за проверкой валидности токена в сервис auth
-func checkUserIsAuthenticated(ctx context.Context, creds *models.UserCredentials, config *conf.Config, authService providers.AuthServiceProvider) (*models.UserDetails, *models.RefreshedTokenCreds, error) {
+func checkUserIsAuthenticated(ctx context.Context, creds *models.UserCredentials, config *conf.Config, authService providers.AuthServiceProvider) (*models.UserAuthDetails, *models.RefreshedTokenCreds, error) {
 	var err error
-	var user *models.UserDetails
+	var userAuthDetails *models.UserAuthDetails
 	var refreshedTokens *models.RefreshedTokenCreds
 
 	effector := func(ctx context.Context) error {
-		user, refreshedTokens, err = authService.CheckUserIsAuthenticated(ctx, creds)
-		log.Println("Effector ", *user, err)
+		userAuthDetails, refreshedTokens, err = authService.CheckUserIsAuthenticated(ctx, creds)
+		log.Println("Effector ", *userAuthDetails, err)
 		if err != nil {
 			return err
 		}
@@ -54,7 +55,7 @@ func checkUserIsAuthenticated(ctx context.Context, creds *models.UserCredentials
 	effectorWithRetry := Retry(effector, config.AuthServiceRetries, time.Duration(config.AuthServiceRetryDelay)*time.Millisecond)
 	err = effectorWithRetry(ctx)
 
-	return user, refreshedTokens, err
+	return userAuthDetails, refreshedTokens, err
 }
 
 // Интерактор, который получает список рассылки юзера из UserDAO
@@ -114,4 +115,13 @@ func loadTemplateAndParseParams(ctx context.Context, templateData *models.HTMLTe
 
 	htmlTemplateDAO.SaveTemplate(ctx, templateData, params, t)
 	return params, nil
+}
+
+func getUserDetails(ctx context.Context, username string, userDAO db.UserDAO) (*models.User, error) {
+	var err error
+	user := userDAO.GetByUsername(username)
+	if user == nil {
+		err = requestErrors.NewUserDAOError(requestErrors.UserNotFound, fmt.Errorf("User with username=%v not found.", username))
+	}
+	return user, err
 }
