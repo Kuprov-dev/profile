@@ -17,7 +17,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
       - name: profile
-        image: <REGISTRY_IMAGE>:<COMMIT_REF_NAME>
+        image: registry.gitlab.com/golang-developer-cloudmts_main/team201/profile:main
         imagePullPolicy: "Always"
         ports:
         - containerPort: 8000
