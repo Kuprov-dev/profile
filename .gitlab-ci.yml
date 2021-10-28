@@ -47,10 +47,12 @@ build image:
     - export K8S_CONTAINER_NAME=$CI_PROJECT_NAME
     - export K8S_NS=$(echo $CI_PROJECT_PATH | awk -F\/ '{print $(NF-1)}')
     - echo "Deploy $K8S_WORKLOAD_TYPE $K8S_WORKLOAD_NAME to namespace $K8S_NS"
-    - kubectl create deployment $K8S_WORKLOAD_NAME --image=$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME -n ${K8S_NS} || echo deployment already exists
-    - kubectl --record ${K8S_WORKLOAD_TYPE}.apps/${K8S_WORKLOAD_NAME} set image ${K8S_WORKLOAD_TYPE}.v1.apps/${K8S_WORKLOAD_NAME} ${K8S_CONTAINER_NAME}=$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME -n ${K8S_NS}
-    - kubectl rollout restart ${K8S_WORKLOAD_TYPE} ${K8S_WORKLOAD_NAME} -n ${K8S_NS} 
-    - kubectl rollout status ${K8S_WORKLOAD_TYPE} ${K8S_WORKLOAD_NAME} -n ${K8S_NS} --timeout=60s
+    - envsubst < deploy.tmpl > deploy.yaml
+    - kubectl apply -f deploy.yaml --namespace=${K8S_NS}
+    # - kubectl create deployment $K8S_WORKLOAD_NAME --image=$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME -n ${K8S_NS} || echo deployment already exists
+    # - kubectl --record ${K8S_WORKLOAD_TYPE}.apps/${K8S_WORKLOAD_NAME} set image ${K8S_WORKLOAD_TYPE}.v1.apps/${K8S_WORKLOAD_NAME} ${K8S_CONTAINER_NAME}=$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME -n ${K8S_NS}
+    # - kubectl rollout restart ${K8S_WORKLOAD_TYPE} ${K8S_WORKLOAD_NAME} -n ${K8S_NS} 
+    # - kubectl rollout status ${K8S_WORKLOAD_TYPE} ${K8S_WORKLOAD_NAME} -n ${K8S_NS} --timeout=60s
 
 deploy staging:
   extends: .image_deploy
