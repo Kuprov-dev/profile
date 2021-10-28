@@ -1,1 +1,0 @@
-{"uuid":"bbf16824-a648-4f78-9762-a99cfb717cb9","name":"hello","template":"<h1>hello{{ .hello}}</h1>","params":["{{.hello}}"]}
