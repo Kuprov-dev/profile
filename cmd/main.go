@@ -27,15 +27,15 @@ func main() {
 	logEntry := logrus.NewEntry(log)
 
 	authService := providers.HttpAuthServiceProvider{Config: config}
-	userDAO := db.InMemroyUserDAO{}
+	userDAO := db.NewInMemoryUserDAO(config)
 	htmlTemplateDAO := db.NewFSTemplateDAO("./html_templates/")
 
 	r := mux.NewRouter()
 
-	r.Handle("/i", profile.ProfileDetailsHandler(config, &userDAO, &authService))
-	r.Handle("/receivers/{uuid}/", profile.ReceiversListHandler(config, &userDAO, &authService)).Methods(http.MethodGet)
-	r.Handle("/receivers/{uuid}/", profile.AddRecieverHandler(config, &userDAO, &authService)).Methods(http.MethodPost)
-	r.Handle("/receivers/{uuid}/", profile.RemoveRecieverHandler(config, &userDAO, &authService)).Methods(http.MethodDelete)
+	r.Handle("/i", profile.ProfileDetailsHandler(config, userDAO, &authService))
+	r.Handle("/receivers/{uuid}/", profile.ReceiversListHandler(config, userDAO, &authService)).Methods(http.MethodGet)
+	r.Handle("/receivers/{uuid}/", profile.AddRecieverHandler(config, userDAO, &authService)).Methods(http.MethodPost)
+	r.Handle("/receivers/{uuid}/", profile.RemoveRecieverHandler(config, userDAO, &authService)).Methods(http.MethodDelete)
 	r.Handle("/upload_template", profile.UploadHTMLTemplateHandler(config, htmlTemplateDAO, &authService)).Methods(http.MethodPost)
 	r.Handle("/templates", profile.HTMLTemplatesListHandler(config, htmlTemplateDAO, &authService)).Methods(http.MethodGet)
 

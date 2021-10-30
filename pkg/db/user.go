@@ -1,6 +1,7 @@
 package db
 
 import (
+	"profile_service/pkg/conf"
 	"profile_service/pkg/errors"
 	"profile_service/pkg/models"
 	"profile_service/pkg/utils"
@@ -20,6 +21,10 @@ var Users map[uuid.UUID]*models.User
 type InMemroyUserDAO struct {
 }
 
+func NewInMemoryUserDAO(config *conf.Config) *InMemroyUserDAO {
+	Users = config.Database.Users
+	return &InMemroyUserDAO{}
+}
 func (*InMemroyUserDAO) GetByUsername(username string) *models.User {
 	var user *models.User
 

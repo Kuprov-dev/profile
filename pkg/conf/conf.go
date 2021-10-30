@@ -9,7 +9,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Конфиги приложения из енв
+// Конфиги приложения
 type Config struct {
 	Server struct {
 		Port             string `yaml:"port"`
