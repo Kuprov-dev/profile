@@ -1,0 +1,27 @@
+# Server configurations
+server:
+  host: "localhost"
+  port: 8000
+  prefix: "profile"
+  jwt_access_secret: "epstein didnt kill himself"
+  jwt_refresh_secret: "There was no Cold War in reality, it was just a cover for two allies to build super advanced militaries to prepare for alien invasion"
+
+# Auth Service
+auth_service:
+  host: "localhost"
+  port: 8000
+  profile_details: "me"
+  token_validation: "i"
+  retries: 3
+  retry_delay: 200
+
+# Database credentials
+database:
+  user: "user"
+  password: "password"
+  users: 
+    "f7630cc2-9806-4a8e-8fab-c0d9a0464e63":
+      uuid: "f7630cc2-9806-4a8e-8fab-c0d9a0464e63"
+      username: "user1"
+      receivers:
+        - "test@mail.ru"

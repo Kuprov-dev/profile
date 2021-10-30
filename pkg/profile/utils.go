@@ -18,7 +18,7 @@ type Effoctor func(context.Context) error
 // Если ресурс недоступен, то пробуем подергать его еще
 func Retry(effoctor Effoctor, retries int, delay time.Duration) Effoctor {
 	return func(ctx context.Context) error {
-		for r := 0; ; r++ {
+		for r := 1; ; r++ {
 			log.Println("...Attempt ", r)
 			err := effoctor(ctx)
 			if err == nil || r > retries {

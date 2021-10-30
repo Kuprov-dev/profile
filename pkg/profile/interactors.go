@@ -16,27 +16,6 @@ import (
 )
 
 // Интерактор, который инкапсулирует логику работы с AuthServiceProvider
-// и ходит за данными юзера в сервис auth
-func getUserDataFromAuthService(ctx context.Context, creds *models.UserCredentials, authService providers.AuthServiceProvider, config conf.Config) (*models.UserAuthDetails, error) {
-	var userAuthDetails *models.UserAuthDetails
-	var err error
-
-	effector := func(ctx context.Context) error {
-		userAuthDetails, err = authService.GetUserData(creds)
-		log.Println("Effector ", *userAuthDetails, err)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-
-	effectorWithRetry := Retry(effector, config.AuthServiceRetries, time.Duration(config.AuthServiceRetryDelay)*time.Millisecond)
-	err = effectorWithRetry(ctx)
-
-	return userAuthDetails, err
-}
-
-// Интерактор, который инкапсулирует логику работы с AuthServiceProvider
 // и ходит за проверкой валидности токена в сервис auth
 func checkUserIsAuthenticated(ctx context.Context, creds *models.UserCredentials, config *conf.Config, authService providers.AuthServiceProvider) (*models.UserAuthDetails, *models.RefreshedTokenCreds, error) {
 	var err error
@@ -52,7 +31,7 @@ func checkUserIsAuthenticated(ctx context.Context, creds *models.UserCredentials
 		return nil
 	}
 
-	effectorWithRetry := Retry(effector, config.AuthServiceRetries, time.Duration(config.AuthServiceRetryDelay)*time.Millisecond)
+	effectorWithRetry := Retry(effector, config.AuthServiceRetries(), time.Duration(config.AuthServiceRetryDelay())*time.Millisecond)
 	err = effectorWithRetry(ctx)
 
 	return userAuthDetails, refreshedTokens, err

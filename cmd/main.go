@@ -20,6 +20,8 @@ func main() {
 	// TODO dependencies
 	// should be rewritten in get<Dependency>(...) style as in FastAPI
 	config := conf.New()
+	db.Users = config.Database.Users
+
 	log := logrus.New()
 	log.SetFormatter(&logrus.JSONFormatter{})
 	logEntry := logrus.NewEntry(log)
@@ -31,10 +33,11 @@ func main() {
 	r := mux.NewRouter()
 
 	r.Handle("/i", profile.ProfileDetailsHandler(config, &userDAO, &authService))
-	r.Handle("/receivers/{uuid}/", profile.ReceiversListHandler(config, &userDAO, &authService)).Methods("GET")
-	r.Handle("/receivers/{uuid}/", profile.AddRecieverHandler(config, &userDAO, &authService)).Methods("POST")
-	r.Handle("/receivers/{uuid}/", profile.RemoveRecieverHandler(config, &userDAO, &authService)).Methods("DELETE")
-	r.Handle("/upload_template", profile.UploadHTMLTemplate(config, htmlTemplateDAO, &authService)).Methods("POST")
+	r.Handle("/receivers/{uuid}/", profile.ReceiversListHandler(config, &userDAO, &authService)).Methods(http.MethodGet)
+	r.Handle("/receivers/{uuid}/", profile.AddRecieverHandler(config, &userDAO, &authService)).Methods(http.MethodPost)
+	r.Handle("/receivers/{uuid}/", profile.RemoveRecieverHandler(config, &userDAO, &authService)).Methods(http.MethodDelete)
+	r.Handle("/upload_template", profile.UploadHTMLTemplateHandler(config, htmlTemplateDAO, &authService)).Methods(http.MethodPost)
+	r.Handle("/templates", profile.HTMLTemplatesListHandler(config, htmlTemplateDAO, &authService)).Methods(http.MethodGet)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop,
@@ -46,7 +49,7 @@ func main() {
 
 	handler := logging.LoggingMiddleware(logEntry)(r)
 	s := &http.Server{
-		Addr:    ":" + config.Port,
+		Addr:    config.ServerAddr(),
 		Handler: handler,
 	}
 	defer s.Close()

@@ -8,9 +8,9 @@ import (
 )
 
 type User struct {
-	UUID      uuid.UUID `json:"uuidd"`
-	Username  string    `json:"username"`
-	Receivers []string  `json:"receivers"`
+	UUID      uuid.UUID `json:"uuidd" yaml:"uuid"`
+	Username  string    `json:"username" yaml:"username"`
+	Receivers []string  `json:"receivers" yaml:"receivers"`
 }
 
 type UserAuthDetails struct {

@@ -201,7 +201,37 @@ func RemoveRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService 
 }
 
 // Ручка удаления из списока рассылки юзера
-func UploadHTMLTemplate(config *conf.Config, htmlTemplateDAO db.HTMLTemplateDAO, authService providers.AuthServiceProvider) http.Handler {
+func UploadHTMLTemplateHandler(config *conf.Config, htmlTemplateDAO db.HTMLTemplateDAO, authService providers.AuthServiceProvider) http.Handler {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		var templateData models.HTMLTeplateCreateSchema
+		if err := json.NewDecoder(r.Body).Decode(&templateData); err != nil {
+			makeBadRequestErrorResponse(&w, "Error decoding data.")
+			return
+		}
+
+		var params []string
+		params, err := loadTemplateAndParseParams(r.Context(), &templateData, htmlTemplateDAO)
+		if err != nil {
+			makeBadRequestErrorResponse(&w, "Error decoding data.")
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		err = json.NewEncoder(w).Encode(models.HTMLTeplateParsedParamsResponse{Params: params})
+		if err != nil {
+			makeBadRequestErrorResponse(&w, "Encoding resposne error")
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}
+
+	isAuthenticatedMiddleware := IsAuthenticatedOrRefreshTokens(config, authService)
+
+	return isAuthenticatedMiddleware(http.HandlerFunc(handler))
+}
+
+// Ручка получения списка шаблонов
+func HTMLTemplatesListHandler(config *conf.Config, htmlTemplateDAO db.HTMLTemplateDAO, authService providers.AuthServiceProvider) http.Handler {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		var templateData models.HTMLTeplateCreateSchema
 		if err := json.NewDecoder(r.Body).Decode(&templateData); err != nil {

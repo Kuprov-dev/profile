@@ -1,7 +1,6 @@
 package db
 
 import (
-	"fmt"
 	"profile_service/pkg/errors"
 	"profile_service/pkg/models"
 	"profile_service/pkg/utils"
@@ -17,30 +16,6 @@ type UserDAO interface {
 }
 
 var Users map[uuid.UUID]*models.User
-
-func init() {
-	uuids := []uuid.UUID{
-		uuid.New(),
-		uuid.New(),
-		uuid.New(),
-	}
-	fmt.Println(uuids)
-	Users = map[uuid.UUID]*models.User{
-		uuids[0]: {
-			UUID:      uuids[0],
-			Username:  "user1",
-			Receivers: []string{"test@mail.ru"},
-		},
-		uuids[1]: {
-			UUID:     uuids[1],
-			Username: "user2",
-		},
-		uuids[2]: {
-			UUID:     uuids[2],
-			Username: "user3",
-		},
-	}
-}
 
 type InMemroyUserDAO struct {
 }
