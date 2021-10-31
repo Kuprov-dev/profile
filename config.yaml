@@ -9,7 +9,7 @@ server:
 # Auth Service
 auth_service:
   host: "http://auth-service"
-  port: 30002
+  port: 8000
   profile_details: "me"
   token_validation: "me"
   retries: 3
