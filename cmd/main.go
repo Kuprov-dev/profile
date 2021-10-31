@@ -22,6 +22,8 @@ func main() {
 	config := conf.New()
 	db.Users = config.Database.Users
 
+	fmt.Println(config.AuthService)
+
 	log := logrus.New()
 	log.SetFormatter(&logrus.JSONFormatter{})
 	logEntry := logrus.NewEntry(log)

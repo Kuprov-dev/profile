@@ -10,6 +10,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -o profile ./cmd
 # generate clean, final image for end users
 FROM quay.io/jitesoft/alpine:3.11.3
 COPY --from=builder /build/profile .
+COPY --from=builder /build/config.yaml .
+
 
 # executable
 ENTRYPOINT ["./profile"]

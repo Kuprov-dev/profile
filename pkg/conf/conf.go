@@ -34,7 +34,7 @@ type Config struct {
 }
 
 func New() *Config {
-	f, err := os.Open("config.yaml")
+	f, err := os.Open("./config.yaml")
 	if err != nil {
 		panic(err)
 	}
