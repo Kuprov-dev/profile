@@ -1,7 +1,9 @@
 package profile
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/mail"
@@ -11,8 +13,13 @@ import (
 	"profile_service/pkg/models"
 	"profile_service/pkg/providers"
 	"strings"
+	"time"
 
-	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 type ResponseBody struct {
@@ -67,7 +74,7 @@ func ReceiversListHandler(config *conf.Config, userDAO db.UserDAO, authService p
 		var err error
 		var receivers *models.UserRecievers
 
-		receivers, err = getUserReceivers(userAuthDetails.Username, userDAO)
+		receivers, err = getUserReceivers(r.Context(), userAuthDetails.Username, userDAO)
 
 		if err != nil {
 			ve, ok := err.(*errors.RequestError)
@@ -108,7 +115,8 @@ func AddRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService pro
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		userValue := r.Context().Value(ContextUserUUIDKey)
 
-		userUUID, ok := userValue.(uuid.UUID)
+		// userUUID, ok := userValue.(uuid.UUID)
+		userUUID, ok := userValue.(primitive.ObjectID)
 		if !ok {
 			makeBadRequestErrorResponse(&w, "Get userUUID from context error.")
 			return
@@ -135,7 +143,7 @@ func AddRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService pro
 			return
 		}
 
-		err = addReciever(userUUID, strings.ToLower(addReceiverData.ReceiverEmail), userDAO)
+		err = addReciever(r.Context(), userUUID, strings.ToLower(addReceiverData.ReceiverEmail), userDAO)
 
 		if err != nil {
 			makeBadRequestErrorResponse(&w, err.Error())
@@ -158,7 +166,9 @@ func RemoveRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService 
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		userValue := r.Context().Value(ContextUserUUIDKey)
 
-		userId, ok := userValue.(uuid.UUID)
+		// userId, ok := userValue.(uuid.UUID)
+		userId, ok := userValue.(primitive.ObjectID)
+
 		if !ok {
 			makeBadRequestErrorResponse(&w, "bruh")
 			return
@@ -183,7 +193,7 @@ func RemoveRecieverHandler(config *conf.Config, userDAO db.UserDAO, authService 
 			makeBadRequestErrorResponse(&w, "bruh")
 		}
 
-		err = removeReciever(userId, strings.ToLower(removeReceiverData.ReceiverEmail), userDAO)
+		err = removeReciever(r.Context(), userId, strings.ToLower(removeReceiverData.ReceiverEmail), userDAO)
 
 		if err != nil {
 			makeBadRequestErrorResponse(&w, err.Error())
@@ -258,4 +268,32 @@ func HTMLTemplatesListHandler(config *conf.Config, htmlTemplateDAO db.HTMLTempla
 	isAuthenticatedMiddleware := IsAuthenticatedOrRefreshTokens(config, authService)
 
 	return isAuthenticatedMiddleware(http.HandlerFunc(handler))
+}
+
+func Test() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// w.Write([]byte("Hello"))
+		ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+		defer cancel()
+
+		client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://192.168.49.2:30003"))
+
+		if err != nil {
+			w.Write([]byte(err.Error()))
+			return
+		}
+
+		fmt.Println(client.ListDatabaseNames(ctx, nil, nil))
+
+		err = client.Ping(ctx, readpref.Primary())
+
+		if err != nil {
+			w.Write([]byte(err.Error()))
+		}
+
+		collection := client.Database("testing").Collection("numbers")
+		res, err := collection.InsertOne(ctx, bson.D{{"name", "pi"}, {"value", 3.14159}})
+		id := res.InsertedID
+		w.Write([]byte(fmt.Sprintf("%v", id)))
+	})
 }

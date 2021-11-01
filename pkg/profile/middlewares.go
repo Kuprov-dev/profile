@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"profile_service/pkg/conf"
 	"profile_service/pkg/db"
@@ -91,14 +91,16 @@ func IsOwner(config *conf.Config, userDao db.UserDAO, authService providers.Auth
 			}
 
 			urlPath := strings.Split(r.URL.Path, "/")
-			userUUID, err := uuid.Parse(urlPath[len(urlPath)-2])
+			// userUUID, err := uuid.Parse(urlPath[len(urlPath)-2])
+			urlUUIDStr := urlPath[len(urlPath)-1]
+			userUUID, err := primitive.ObjectIDFromHex(urlUUIDStr)
 
 			if err != nil {
 				makeBadRequestErrorResponse(&w, "Not valid uuid path param.")
 				return
 			}
 
-			if !checkIsTheSameUser(userUUID, userAuthDetails.Username, userDao) {
+			if !checkIsTheSameUser(r.Context(), userUUID, userAuthDetails.Username, userDao) {
 				makeForbiddenErrorResponse(&w)
 				return
 			}

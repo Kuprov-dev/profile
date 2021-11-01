@@ -5,12 +5,19 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// type User struct {
+// 	UUID      uuid.UUID `json:"uuidd" yaml:"uuid"`
+// 	Username  string    `json:"username" yaml:"username"`
+// 	Receivers []string  `json:"receivers" yaml:"receivers"`
+// }
+
 type User struct {
-	UUID      uuid.UUID `json:"uuidd" yaml:"uuid"`
-	Username  string    `json:"username" yaml:"username"`
-	Receivers []string  `json:"receivers" yaml:"receivers"`
+	UUID      primitive.ObjectID `bson:"_id,omitempty"`
+	Username  string             `bson:"username"`
+	Receivers []string           `bson:"receivers"`
 }
 
 type UserAuthDetails struct {

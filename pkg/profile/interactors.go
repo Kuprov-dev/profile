@@ -12,7 +12,7 @@ import (
 	"profile_service/pkg/providers"
 	"time"
 
-	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // Интерактор, который инкапсулирует логику работы с AuthServiceProvider
@@ -38,10 +38,10 @@ func checkUserIsAuthenticated(ctx context.Context, creds *models.UserCredentials
 }
 
 // Интерактор, который получает список рассылки юзера из UserDAO
-func getUserReceivers(username string, userDAO db.UserDAO) (*models.UserRecievers, error) {
-	userFromDB := userDAO.GetByUsername(username)
+func getUserReceivers(ctx context.Context, username string, userDAO db.UserDAO) (*models.UserRecievers, error) {
+	userFromDB, err := userDAO.GetByUsername(ctx, username)
 
-	if userFromDB == nil {
+	if userFromDB == nil || err != nil {
 		return nil, requestErrors.NewUserDAOError(requestErrors.UserNotFoundInDB, nil)
 	}
 
@@ -52,9 +52,9 @@ func getUserReceivers(username string, userDAO db.UserDAO) (*models.UserReciever
 
 // Интерактор который сопоставляет UUID из path и username, проверяет, что это это один и тот же юзер
 // Служит для авторизации, кмк нужно переделать
-func checkIsTheSameUser(userUUID uuid.UUID, username string, userDAO db.UserDAO) bool {
-	user := userDAO.GetByUUID(userUUID)
-	if user == nil {
+func checkIsTheSameUser(ctx context.Context, userUUID primitive.ObjectID, username string, userDAO db.UserDAO) bool {
+	user, err := userDAO.GetByUUID(ctx, userUUID)
+	if user == nil || err != nil {
 		return false
 	}
 
@@ -62,26 +62,32 @@ func checkIsTheSameUser(userUUID uuid.UUID, username string, userDAO db.UserDAO)
 }
 
 // Интерактор который добавляет айди юзера в список рассылки
-func addReciever(userUUID uuid.UUID, receiverEmail string, userDAO db.UserDAO) error {
-	user := userDAO.GetByUUID(userUUID)
+func addReciever(ctx context.Context, userUUID primitive.ObjectID, receiverEmail string, userDAO db.UserDAO) error {
+	user, err := userDAO.GetByUUID(ctx, userUUID)
+	if err != nil {
+		return err
+	}
 
 	if user == nil {
 		return requestErrors.NewUserDAOError(requestErrors.UserNotFoundInDB, nil)
 	}
 
-	err := userDAO.AddReceiver(userUUID, receiverEmail)
+	err = userDAO.AddReceiver(ctx, userUUID, receiverEmail)
 
 	return err
 }
 
 // Интерактор для удаления юзера из списка рассылки
-func removeReciever(userUUID uuid.UUID, receiverEmail string, userDAO db.UserDAO) error {
-	user := userDAO.GetByUUID(userUUID)
+func removeReciever(ctx context.Context, userUUID primitive.ObjectID, receiverEmail string, userDAO db.UserDAO) error {
+	user, err := userDAO.GetByUUID(ctx, userUUID)
+	if err != nil {
+		return err
+	}
 	if user == nil {
 		return requestErrors.NewUserDAOError(requestErrors.UserNotFoundInDB, nil)
 	}
 
-	err := userDAO.RemoveReceiver(user.UUID, receiverEmail)
+	err = userDAO.RemoveReceiver(ctx, user.UUID, receiverEmail)
 
 	return err
 }
@@ -98,7 +104,7 @@ func loadTemplateAndParseParams(ctx context.Context, templateData *models.HTMLTe
 
 func getUserDetails(ctx context.Context, username string, userDAO db.UserDAO) (*models.User, error) {
 	var err error
-	user := userDAO.GetByUsername(username)
+	user, err := userDAO.GetByUsername(ctx, username)
 	if user == nil {
 		err = requestErrors.NewUserDAOError(requestErrors.UserNotFound, fmt.Errorf("User with username=%v not found.", username))
 	}

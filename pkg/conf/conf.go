@@ -1,6 +1,7 @@
 package conf
 
 import (
+	"fmt"
 	"os"
 	"profile_service/pkg/models"
 	"strconv"
@@ -27,6 +28,9 @@ type Config struct {
 		RetryDelay      int    `yaml:"retry_delay"`
 	} `yaml:"auth_service"`
 	Database struct {
+		Host     string                     `yaml:"host"`
+		Port     string                     `yaml:"port"`
+		DBName   string                     `yaml:"db_name"`
 		Username string                     `yaml:"user"`
 		Password string                     `yaml:"password"`
 		Users    map[uuid.UUID]*models.User `yaml:"users"`
@@ -51,15 +55,15 @@ func New() *Config {
 }
 
 func (c *Config) GetAuthServiceAddr() string {
-	return c.AuthService.Host + ":" + c.AuthService.Port
+	return fmt.Sprintf("%s:%s", c.AuthService.Host, c.AuthService.Port)
 }
 
 func (c *Config) GetAuthServiceProfileDetailsUrl() string {
-	return c.GetAuthServiceAddr() + "/" + c.AuthService.ProfileDetails
+	return fmt.Sprintf("%s:%s", c.GetAuthServiceAddr(), c.AuthService.ProfileDetails)
 }
 
 func (c *Config) GetAuthServiceTokenValidationUrl() string {
-	return c.GetAuthServiceAddr() + "/" + c.AuthService.TokenValidation
+	return fmt.Sprintf("%s:%s", c.GetAuthServiceAddr(), c.AuthService.TokenValidation)
 }
 
 func (c *Config) AuthServiceRetries() int {
@@ -71,7 +75,11 @@ func (c *Config) AuthServiceRetryDelay() int {
 }
 
 func (c *Config) ServerAddr() string {
-	return c.Server.Host + ":" + c.Server.Port
+	return fmt.Sprintf("%s:%s", c.Server.Host, c.Server.Port)
+}
+
+func (c *Config) GetDatabaseUri() string {
+	return fmt.Sprintf("%s:%s", c.Database.Host, c.Database.Port)
 }
 
 func getenvInt(key string) int {

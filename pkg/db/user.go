@@ -1,84 +1,15 @@
 package db
 
 import (
-	"profile_service/pkg/conf"
-	"profile_service/pkg/errors"
+	"context"
 	"profile_service/pkg/models"
-	"profile_service/pkg/utils"
 
-	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type UserDAO interface {
-	GetByUsername(username string) *models.User
-	GetByUUID(userUUID uuid.UUID) *models.User
-	AddReceiver(userUUID uuid.UUID, recieverEmail string) error
-	RemoveReceiver(userUUID uuid.UUID, receiverEmail string) error
-}
-
-var Users map[uuid.UUID]*models.User
-
-type InMemroyUserDAO struct {
-}
-
-func NewInMemoryUserDAO(config *conf.Config) *InMemroyUserDAO {
-	Users = config.Database.Users
-	return &InMemroyUserDAO{}
-}
-func (*InMemroyUserDAO) GetByUsername(username string) *models.User {
-	var user *models.User
-
-	for _, u := range Users {
-		if u.Username == username {
-			user = u
-			break
-		}
-	}
-
-	return user
-}
-
-func (*InMemroyUserDAO) GetByUUID(userUUID uuid.UUID) *models.User {
-	user, ok := Users[userUUID]
-	if !ok {
-		return nil
-	}
-
-	return user
-}
-
-func (*InMemroyUserDAO) AddReceiver(userUUID uuid.UUID, recieverEmail string) error {
-	user, ok := Users[userUUID]
-	if !ok {
-		return errors.NewUserDAOError(errors.UserNotFoundInDB, nil)
-	}
-
-	ok = utils.ContainsString(user.Receivers, recieverEmail)
-	if ok {
-		return errors.NewUserDAOError(errors.DublicateReceiver, nil)
-	}
-
-	user.Receivers = append(user.Receivers, recieverEmail)
-
-	return nil
-}
-
-func (*InMemroyUserDAO) RemoveReceiver(userUUID uuid.UUID, recieverEmail string) error {
-	user, ok := Users[userUUID]
-	if !ok {
-		return errors.NewUserDAOError(errors.UserNotFoundInDB, nil)
-	}
-
-	ok = utils.ContainsString(user.Receivers, recieverEmail)
-	if !ok {
-		return errors.NewUserDAOError(errors.ReceiverNotFoundInDB, nil)
-	}
-
-	for ind, email := range user.Receivers {
-		if email == recieverEmail {
-			user.Receivers = append(user.Receivers[:ind], user.Receivers[ind+1:]...)
-			return nil
-		}
-	}
-	return errors.NewUserDAOError(errors.ReceiverNotInList, nil)
+	GetByUsername(ctx context.Context, username string) (*models.User, error)
+	GetByUUID(ctx context.Context, userUUID primitive.ObjectID) (*models.User, error)
+	AddReceiver(ctx context.Context, userUUID primitive.ObjectID, recieverEmail string) error
+	RemoveReceiver(ctx context.Context, userUUID primitive.ObjectID, receiverEmail string) error
 }

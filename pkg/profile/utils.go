@@ -65,6 +65,23 @@ func RefreshTokenHeaders(w *http.ResponseWriter, refreshedTokenCreds *models.Ref
 	})
 }
 
+func RefreshTokenCookies(w *http.ResponseWriter, refreshedTokenCreds *models.RefreshedTokenCreds) {
+	http.SetCookie(*w, &http.Cookie{
+		Name:     "Access",
+		Value:    refreshedTokenCreds.AccessToken,
+		Path:     "/",
+		Expires:  refreshedTokenCreds.AccessExpirationTime,
+		HttpOnly: true,
+	})
+	http.SetCookie(*w, &http.Cookie{
+		Name:     "Refresh",
+		Value:    refreshedTokenCreds.RefreshedToken,
+		Path:     "/",
+		Expires:  refreshedTokenCreds.RefreshExpirationTime,
+		HttpOnly: true,
+	})
+}
+
 // Вытаскивает все параметры из шаблона
 func ListTemplFields(t *template.Template) []string {
 	return listNodeFields(t.Tree.Root)
