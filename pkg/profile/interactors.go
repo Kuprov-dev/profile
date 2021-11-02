@@ -110,3 +110,13 @@ func getUserDetails(ctx context.Context, username string, userDAO db.UserDAO) (*
 	}
 	return user, err
 }
+
+func getTemplatesList(ctx context.Context, htmlTemplateDAO db.HTMLTemplateDAO) ([]*models.HTMLTeplate, error) {
+	templates, err := htmlTemplateDAO.GetTemplatesList(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return templates, nil
+}

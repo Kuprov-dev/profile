@@ -27,7 +27,7 @@ func (dao *FSTemplateDAO) SaveTemplate(ctx context.Context, templateData *models
 	templateObj := &models.HTMLTeplate{
 		UUID:     uuid.New(),
 		Name:     templateData.Name,
-		Template: template,
+		Template: templateData.Template,
 	}
 	HTMLTemplates[templateObj.UUID] = templateObj
 
@@ -41,7 +41,7 @@ func (dao *FSTemplateDAO) SaveTemplate(ctx context.Context, templateData *models
 	w := bufio.NewWriter(file)
 	encoder := json.NewEncoder(w)
 	encoder.SetEscapeHTML(false)
-	writeFileError := encoder.Encode(models.HTMLTeplateDumpSchema{
+	writeFileError := encoder.Encode(models.HTMLTeplate{
 		UUID:     templateObj.UUID,
 		Name:     templateObj.Name,
 		Template: templateData.Template,

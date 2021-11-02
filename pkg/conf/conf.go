@@ -59,11 +59,11 @@ func (c *Config) GetAuthServiceAddr() string {
 }
 
 func (c *Config) GetAuthServiceProfileDetailsUrl() string {
-	return fmt.Sprintf("%s:%s", c.GetAuthServiceAddr(), c.AuthService.ProfileDetails)
+	return fmt.Sprintf("%s/%s", c.GetAuthServiceAddr(), c.AuthService.ProfileDetails)
 }
 
 func (c *Config) GetAuthServiceTokenValidationUrl() string {
-	return fmt.Sprintf("%s:%s", c.GetAuthServiceAddr(), c.AuthService.TokenValidation)
+	return fmt.Sprintf("%s/%s", c.GetAuthServiceAddr(), c.AuthService.TokenValidation)
 }
 
 func (c *Config) AuthServiceRetries() int {

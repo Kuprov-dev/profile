@@ -10,10 +10,10 @@ server:
 auth_service:
   # host: "http://192.168.49.2"
   # port: 30002
-  # host: "http://0.0.0.0"
-  # port: 8001
-  host: "http://auth-service"
+  host: "http://0.0.0.0"
   port: 8001
+  # host: "http://auth-service"
+  # port: 8001
   profile_details: "me"
   token_validation: "me"
   retries: 3
@@ -29,8 +29,8 @@ database:
   user: "user"
   password: "password"
   users: 
-    "f7630cc2-9806-4a8e-8fab-c0d9a0464e63":
-      uuid: "f7630cc2-9806-4a8e-8fab-c0d9a0464e63"
-      username: "user1"
-      receivers:
-        - "test@mail.ru"
+    # "f7630cc2-9806-4a8e-8fab-c0d9a0464e63":
+    #   uuid: "f7630cc2-9806-4a8e-8fab-c0d9a0464e63"
+    #   username: "user1"
+    #   receivers:
+    #     - "test@mail.ru"

@@ -11,16 +11,16 @@ import (
 var HTMLTemplates map[uuid.UUID]*models.HTMLTeplate
 
 func init() {
-	firstUUID := uuid.New()
-	template, _ := template.New("test").
-		Parse(`<h1>{{ .name }} {{ .age }}<h2>{{ .key}}</h2></h1>`)
-	HTMLTemplates = map[uuid.UUID]*models.HTMLTeplate{
-		firstUUID: {
-			UUID:     firstUUID,
-			Name:     "test",
-			Template: template,
-		},
-	}
+	// firstUUID := uuid.New()
+	// template, _ := template.New("test").
+	// 	Parse(`<h1>{{ .name }} {{ .age }}<h2>{{ .key}}</h2></h1>`)
+	// HTMLTemplates = map[uuid.UUID]*models.HTMLTeplate{
+	// 	firstUUID: {
+	// 		UUID:     firstUUID,
+	// 		Name:     "test",
+	// 		Template: template,
+	// 	},
+	// }
 }
 
 type InMemoryTemplateDAO struct {
@@ -34,7 +34,7 @@ func (dao *InMemoryTemplateDAO) SaveTemplate(ctx context.Context, templateData *
 	templateObj := &models.HTMLTeplate{
 		UUID:     uuid.New(),
 		Name:     templateData.Name,
-		Template: template,
+		Template: templateData.Template,
 	}
 	HTMLTemplates[templateObj.UUID] = templateObj
 	return templateObj

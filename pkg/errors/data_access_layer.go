@@ -17,6 +17,7 @@ const (
 	ReceiverNotInList
 	DublicateReceiver
 	SameUser
+	ShitHappens
 )
 
 /*-------------------------------------------------------------------*/

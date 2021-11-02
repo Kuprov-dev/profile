@@ -1,7 +1,6 @@
 package models
 
 import (
-	"html/template"
 	"time"
 
 	"github.com/google/uuid"
@@ -47,12 +46,6 @@ type HTMLTeplateCreateSchema struct {
 }
 
 type HTMLTeplate struct {
-	UUID     uuid.UUID          `json:"uuid"`
-	Name     string             `json:"name"`
-	Template *template.Template `json:"template"`
-}
-
-type HTMLTeplateDumpSchema struct {
 	UUID     uuid.UUID `json:"uuid"`
 	Name     string    `json:"name"`
 	Template string    `json:"template"`
@@ -72,5 +65,9 @@ type RefreshedTokenCreds struct {
 }
 
 type HTMLTeplateParsedParamsResponse struct {
-	Params []string
+	Params []string `json:"params"`
+}
+
+type HTMLTeplatesListResponse struct {
+	Templates []*HTMLTeplate `json:"templates"`
 }

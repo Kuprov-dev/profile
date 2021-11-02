@@ -92,7 +92,7 @@ func IsOwner(config *conf.Config, userDao db.UserDAO, authService providers.Auth
 
 			urlPath := strings.Split(r.URL.Path, "/")
 			// userUUID, err := uuid.Parse(urlPath[len(urlPath)-2])
-			urlUUIDStr := urlPath[len(urlPath)-1]
+			urlUUIDStr := urlPath[len(urlPath)-2]
 			userUUID, err := primitive.ObjectIDFromHex(urlUUIDStr)
 
 			if err != nil {

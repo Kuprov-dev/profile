@@ -31,8 +31,11 @@ func main() {
 
 	authService := providers.HttpAuthServiceProvider{Config: config}
 	// userDAO := db.NewInMemoryUserDAO(config)
-	userDAO := db.NewMongoDBUserDAO(context.Background(), config)
-	htmlTemplateDAO := db.NewFSTemplateDAO("./html_templates/")
+	// htmlTemplateDAO := db.NewFSTemplateDAO("./html_templates/")
+
+	db.ConnectMongoDB(context.Background(), config)
+	userDAO := db.NewMongoDBUserDAO(context.Background(), db.GetMongoDBConnection(), config)
+	templateDAO := db.NewMongoDBTemplateDAO(context.Background(), db.GetMongoDBConnection(), config)
 
 	r := mux.NewRouter()
 
@@ -40,8 +43,8 @@ func main() {
 	r.Handle("/receivers/{uuid}/", profile.ReceiversListHandler(config, userDAO, &authService)).Methods(http.MethodGet)
 	r.Handle("/receivers/{uuid}/", profile.AddRecieverHandler(config, userDAO, &authService)).Methods(http.MethodPost)
 	r.Handle("/receivers/{uuid}/", profile.RemoveRecieverHandler(config, userDAO, &authService)).Methods(http.MethodDelete)
-	r.Handle("/upload_template", profile.UploadHTMLTemplateHandler(config, htmlTemplateDAO, &authService)).Methods(http.MethodPost)
-	r.Handle("/templates", profile.HTMLTemplatesListHandler(config, htmlTemplateDAO, &authService)).Methods(http.MethodGet)
+	r.Handle("/upload_template", profile.UploadHTMLTemplateHandler(config, templateDAO, &authService)).Methods(http.MethodPost)
+	r.Handle("/templates", profile.HTMLTemplatesListHandler(config, templateDAO, &authService)).Methods(http.MethodGet)
 	r.Handle("/test", profile.Test()).Methods(http.MethodGet)
 
 	stop := make(chan os.Signal, 1)
