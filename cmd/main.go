@@ -45,6 +45,8 @@ func main() {
 	r.Handle("/receivers/{uuid}/", profile.RemoveRecieverHandler(config, userDAO, &authService)).Methods(http.MethodDelete)
 	r.Handle("/upload_template", profile.UploadHTMLTemplateHandler(config, templateDAO, &authService)).Methods(http.MethodPost)
 	r.Handle("/templates", profile.HTMLTemplatesListHandler(config, templateDAO, &authService)).Methods(http.MethodGet)
+	r.Handle("/templates/{name}/", profile.HTMLTemplateDetailHandler(config, templateDAO, &authService)).Methods(http.MethodGet)
+
 	r.Handle("/test", profile.Test()).Methods(http.MethodGet)
 
 	stop := make(chan os.Signal, 1)

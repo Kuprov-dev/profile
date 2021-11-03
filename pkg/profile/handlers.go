@@ -222,14 +222,14 @@ func UploadHTMLTemplateHandler(config *conf.Config, htmlTemplateDAO db.HTMLTempl
 		var params []string
 		params, err := loadTemplateAndParseParams(r.Context(), &templateData, htmlTemplateDAO)
 		if err != nil {
-			makeBadRequestErrorResponse(&w, "Error decoding data.")
+			makeBadRequestErrorResponse(&w, err.Error())
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		err = json.NewEncoder(w).Encode(models.HTMLTeplateParsedParamsResponse{Params: params})
 		if err != nil {
-			makeBadRequestErrorResponse(&w, "Encoding resposne error")
+			makeBadRequestErrorResponse(&w, err.Error())
 			return
 		}
 		w.WriteHeader(http.StatusOK)
@@ -253,6 +253,33 @@ func HTMLTemplatesListHandler(config *conf.Config, htmlTemplateDAO db.HTMLTempla
 		err = json.NewEncoder(w).Encode(models.HTMLTeplatesListResponse{Templates: templates})
 		if err != nil {
 			makeBadRequestErrorResponse(&w, "Encoding templates list resposne error.")
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}
+
+	isAuthenticatedMiddleware := IsAuthenticatedOrRefreshTokens(config, authService)
+
+	return isAuthenticatedMiddleware(http.HandlerFunc(handler))
+}
+
+// Ручка получения списка шаблонов
+func HTMLTemplateDetailHandler(config *conf.Config, htmlTemplateDAO db.HTMLTemplateDAO, authService providers.AuthServiceProvider) http.Handler {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		urlPath := strings.Split(r.URL.Path, "/")
+
+		templateName := urlPath[len(urlPath)-2]
+
+		template, err := getTemplateDetail(r.Context(), templateName, htmlTemplateDAO)
+		if err != nil {
+			makeBadRequestErrorResponse(&w, "Get template detail error. "+err.Error())
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		err = json.NewEncoder(w).Encode(models.HTMLTemplateDetailResponse{Template: template})
+		if err != nil {
+			makeBadRequestErrorResponse(&w, "Encoding template detail resposne error.")
 			return
 		}
 		w.WriteHeader(http.StatusOK)

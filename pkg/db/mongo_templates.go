@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"html/template"
 	"profile_service/pkg/conf"
 	"profile_service/pkg/models"
@@ -28,9 +29,18 @@ func (dao *MongoDBTemplateDAO) SaveTemplate(ctx context.Context, templateData *m
 		Params:   params,
 	}
 
+	existTemplate, err := dao.GetTemplateByName(ctx, templateData.Name)
+	if existTemplate != nil {
+		return nil, fmt.Errorf("Template with name=%v is already exists.", templateData.Name)
+	}
+
+	if err != nil && err != mongo.ErrNoDocuments {
+		return nil, err
+	}
+
 	collection := dao.db.Collection(dao.templateCollection)
 
-	_, err := collection.InsertOne(ctx, templateObj)
+	_, err = collection.InsertOne(ctx, templateObj)
 
 	if err != nil {
 		return nil, err
@@ -58,4 +68,17 @@ func (dao *MongoDBTemplateDAO) GetTemplatesList(ctx context.Context) ([]*models.
 	}
 
 	return templates, nil
+}
+
+func (dao *MongoDBTemplateDAO) GetTemplateByName(ctx context.Context, name string) (*models.HTMLTeplate, error) {
+	collection := dao.db.Collection(dao.templateCollection)
+
+	var template models.HTMLTeplate
+	filter := bson.M{"name": name}
+	err := collection.FindOne(ctx, filter).Decode(&template)
+	if err != nil {
+		return nil, err
+	}
+
+	return &template, nil
 }

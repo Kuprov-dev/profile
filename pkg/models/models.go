@@ -71,3 +71,7 @@ type HTMLTeplateParsedParamsResponse struct {
 type HTMLTeplatesListResponse struct {
 	Templates []*HTMLTeplate `json:"templates"`
 }
+
+type HTMLTemplateDetailResponse struct {
+	Template *HTMLTeplate `json:"template"`
+}

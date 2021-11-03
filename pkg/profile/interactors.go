@@ -98,7 +98,11 @@ func loadTemplateAndParseParams(ctx context.Context, templateData *models.HTMLTe
 		Parse(templateData.Template))
 	params := ListTemplFields(t)
 
-	htmlTemplateDAO.SaveTemplate(ctx, templateData, params, t)
+	_, err := htmlTemplateDAO.SaveTemplate(ctx, templateData, params, t)
+	if err != nil {
+		fmt.Println("???")
+		return nil, err
+	}
 	return params, nil
 }
 
@@ -113,6 +117,16 @@ func getUserDetails(ctx context.Context, username string, userDAO db.UserDAO) (*
 
 func getTemplatesList(ctx context.Context, htmlTemplateDAO db.HTMLTemplateDAO) ([]*models.HTMLTeplate, error) {
 	templates, err := htmlTemplateDAO.GetTemplatesList(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return templates, nil
+}
+
+func getTemplateDetail(ctx context.Context, name string, htmlTemplateDAO db.HTMLTemplateDAO) (*models.HTMLTeplate, error) {
+	templates, err := htmlTemplateDAO.GetTemplateByName(ctx, name)
 
 	if err != nil {
 		return nil, err
